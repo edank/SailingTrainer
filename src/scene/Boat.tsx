@@ -39,7 +39,8 @@ export function Boat() {
       boom.current.rotation.set(-derived.boomLift, derived.boomAngle, 0, 'YXZ')
       boom.current.position.z = MAST_Z + mastBendAt(GOOSENECK_Y, derived.mastBend)
     }
-    if (rudder.current) rudder.current.rotation.y = -boat.tiller * 0.6
+    // Tiller swings opposite to the turn: steering to starboard pushes it to port.
+    if (rudder.current) rudder.current.rotation.y = boat.tiller * 0.6
     if (fly.current) {
       fly.current.rotation.y = -derived.awa
       fly.current.position.z = MAST_Z + mastBendAt(HEAD_Y, derived.mastBend)
