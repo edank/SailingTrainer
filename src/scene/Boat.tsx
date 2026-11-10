@@ -81,6 +81,11 @@ export function Boat() {
           <boxGeometry args={[0.03, 0.85, 0.3]} />
           <meshStandardMaterial color={TRIM_COLOR} roughness={0.6} />
         </mesh>
+        {/* Rudder head: spans from the blade top up to where the tiller's aft end enters it */}
+        <mesh position={[0, 0.06, 0.04]}>
+          <boxGeometry args={[0.06, 0.3, 0.14]} />
+          <meshStandardMaterial color={TRIM_COLOR} roughness={0.6} />
+        </mesh>
         <mesh position={[0, 0.12, -0.75]} rotation-x={Math.PI / 2 - 0.08}>
           <cylinderGeometry args={[0.018, 0.022, 1.5, 6]} />
           <meshStandardMaterial color={SPAR_COLOR} roughness={0.5} metalness={0.3} />

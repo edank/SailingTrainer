@@ -44,10 +44,6 @@ export function HUD() {
             Wind {kn(wind.speed)} kn
             <input type="range" min={1.5} max={12} step={0.25} value={wind.speed} onChange={(e) => setWind({ speed: +e.target.value })} />
           </label>
-          <label>
-            From {toDeg(wind.fromDir)}°
-            <input type="range" min={0} max={359} step={1} value={toDeg(wind.fromDir)} onChange={(e) => setWind({ fromDir: (+e.target.value * Math.PI) / 180 })} />
-          </label>
         </div>
         <div className="btn-row">
           <button onClick={() => setCamera(nextCamera(camera))}>{CAMERA_LABEL[nextCamera(camera)]} <kbd>C</kbd></button>
