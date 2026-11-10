@@ -1,0 +1,511 @@
+// ---------- Tokens ----------
+$fg: #eef4f8;
+$muted: #9fb3c2;
+$accent: #ffb13b;
+$good: #39d353;
+$bad: #ff5a5f;
+$ok: #ffd166;
+$wind: #7fd3ff;
+$ink: #1b1b1b;
+$water: #1b5f8f;
+$radius: 12px;
+$phone: 720px;
+
+@mixin phone {
+  @media (max-width: $phone) {
+    @content;
+  }
+}
+
+@mixin glass($bg: var(--bg), $blur: 10px) {
+  background: $bg;
+  backdrop-filter: blur($blur);
+}
+
+@mixin pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+:root {
+  --bg: rgba(12, 24, 36, 0.72);
+  --bg-strong: rgba(12, 24, 36, 0.9);
+  --fg: #{$fg};
+  --muted: #{$muted};
+  --accent: #{$accent};
+  --good: #{$good};
+  --bad: #{$bad};
+  --ok: #{$ok};
+  --radius: #{$radius};
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.4;
+  color-scheme: dark;
+
+  @include phone {
+    font-size: 13px;
+  }
+}
+
+// ---------- Base ----------
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: $water;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+}
+
+kbd {
+  font: 11px ui-monospace, Menlo, monospace;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+button {
+  font: inherit;
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  &.link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    padding: 4px 0;
+    text-align: left;
+  }
+}
+
+// ---------- HUD ----------
+.hud {
+  @include glass;
+  position: absolute;
+  top: 12px;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+
+  &-left {
+    left: 12px;
+    min-width: 230px;
+
+    @include phone {
+      min-width: 0;
+      max-width: 46vw;
+    }
+  }
+
+  &-right {
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    .compass {
+      @include phone {
+        width: 120px;
+        height: 120px;
+      }
+    }
+  }
+
+  &-title {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+  }
+}
+
+.stat {
+  .label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+  }
+
+  .val {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &.big {
+    .val {
+      font-size: 34px;
+      line-height: 1;
+
+      @include phone {
+        font-size: 26px;
+      }
+    }
+
+    .unit {
+      margin-left: 4px;
+      color: var(--muted);
+    }
+
+    .small {
+      margin-left: 8px;
+    }
+  }
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+
+  @include phone {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+}
+
+.pos-badge {
+  @include pill;
+  background: var(--accent);
+  color: $ink;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.trim-badge {
+  @include pill;
+  font-weight: 600;
+  margin-top: 6px;
+
+  @each $state, $color in (good: $good, ok: $ok, bad: $bad) {
+    &.#{$state} {
+      background: rgba($color, 0.2);
+      color: var(--#{$state});
+    }
+  }
+}
+
+.wind-ctl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 160px;
+  font-size: 12px;
+  color: var(--muted);
+
+  input {
+    width: 100%;
+  }
+
+  @include phone {
+    width: 120px;
+  }
+}
+
+.btn-row {
+  display: flex;
+  gap: 6px;
+}
+
+// ---------- Compass rose ----------
+.compass {
+  .sector {
+    fill: rgba(255, 255, 255, 0.06);
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 1;
+
+    &.current {
+      fill: rgba($accent, 0.45);
+    }
+  }
+
+  .rose-ring {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.35);
+    stroke-width: 1.5;
+  }
+
+  .wind-arrow {
+    line,
+    polygon {
+      stroke: $wind;
+      fill: $wind;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+  }
+
+  .rose-boat path {
+    fill: var(--fg);
+    stroke: $ink;
+    stroke-width: 1;
+  }
+
+  .rose-label {
+    fill: var(--muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ---------- Controls ----------
+.tiller {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  display: flex;
+  gap: 14px;
+
+  @include phone {
+    left: 12px;
+    transform: none;
+  }
+}
+
+button.hold {
+  @include glass(var(--bg-strong));
+  width: 68px;
+  height: 68px;
+  font-size: 26px;
+  border-radius: 16px;
+  touch-action: none;
+
+  &:active {
+    background: var(--accent);
+    color: $ink;
+  }
+}
+
+.trim-panel {
+  @include glass;
+  position: absolute;
+  right: 12px;
+  bottom: 16px;
+  width: 260px;
+  border-radius: var(--radius);
+  padding: 10px 14px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  @include phone {
+    width: min(230px, 60vw);
+  }
+}
+
+.shape-readout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-variant-numeric: tabular-nums;
+
+  b {
+    color: var(--fg);
+    font-weight: 600;
+    margin-left: 2px;
+  }
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+  }
+
+  .name {
+    font-weight: 600;
+  }
+
+  .hint {
+    font-size: 11px;
+
+    &.on {
+      color: var(--ok);
+    }
+
+    &.ease {
+      color: $wind;
+    }
+
+    &.ok {
+      color: var(--good);
+    }
+  }
+
+  input {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+}
+
+// ---------- Side panel ----------
+.panel {
+  @include glass(var(--bg-strong), 12px);
+  position: absolute;
+  top: 190px;
+  left: 12px;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100vh - 300px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+
+  // Phones: bottom sheet over the controls; opens on demand via the ☰ button.
+  @include phone {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: 55vh;
+    z-index: 2;
+  }
+
+  &:not(.open) {
+    width: auto;
+
+    .tabs button:not(.close) {
+      display: none;
+    }
+
+    @include phone {
+      right: auto;
+      bottom: 100px;
+    }
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 6px 10px;
+    border-radius: 8px;
+
+    &.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--fg);
+    }
+  }
+
+  .close {
+    margin-left: auto;
+  }
+}
+
+.panel-body {
+  overflow: auto;
+  padding: 10px 14px 14px;
+
+  p {
+    margin: 6px 0;
+  }
+}
+
+.lede {
+  color: var(--muted);
+}
+
+details {
+  border-left: 3px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
+  margin: 6px 0;
+
+  &.current {
+    border-color: var(--accent);
+    background: rgba($accent, 0.08);
+    border-radius: 0 8px 8px 0;
+  }
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.goals {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    padding-left: 24px;
+    position: relative;
+    color: var(--muted);
+
+    &::before {
+      content: '○';
+      position: absolute;
+      left: 4px;
+    }
+
+    &.done {
+      color: var(--good);
+      text-decoration: line-through;
+
+      &::before {
+        content: '●';
+      }
+    }
+  }
+}
