@@ -69,11 +69,6 @@ export function Boat() {
         <meshStandardMaterial color={TRIM_COLOR} roughness={0.9} />
       </mesh>
 
-      {/* Daggerboard */}
-      <mesh position={[0, -0.45, -0.15]}>
-        <boxGeometry args={[0.03, 0.9, 0.35]} />
-        <meshStandardMaterial color={TRIM_COLOR} roughness={0.6} />
-      </mesh>
 
       {/* Rudder + tiller, pivot at the transom */}
       <group ref={rudder} position={[0, 0.25, HULL_LENGTH / 2 + 0.04]}>

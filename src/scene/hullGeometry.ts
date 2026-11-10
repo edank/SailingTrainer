@@ -13,13 +13,13 @@ const RING_POINTS = 11 // points around one half-section (sheer → keel → she
 
 /** [t, halfBeam, keelDepth, sheerHeight] knots along the hull, t = 0 bow → 1 stern. */
 const KNOTS: [number, number, number, number][] = [
-  [0.0, 0.015, 0.05, 0.46],
-  [0.12, 0.26, 0.13, 0.4],
-  [0.3, 0.5, 0.19, 0.34],
-  [0.5, 0.65, 0.22, 0.31],
-  [0.7, 0.69, 0.21, 0.29],
-  [0.88, 0.62, 0.16, 0.29],
-  [1.0, 0.5, 0.1, 0.3],
+  [0.0, 0.015, 0.05, 0.25],
+  [0.12, 0.26, 0.13, 0.25],
+  [0.3, 0.5, 0.19, 0.25],
+  [0.5, 0.65, 0.22, 0.25],
+  [0.7, 0.69, 0.21, 0.25],
+  [0.88, 0.62, 0.16, 0.25],
+  [1.0, 0.5, 0.1, 0.25],
 ]
 
 /** Widest half-beam of the hull. */

@@ -23,7 +23,7 @@ interface Props {
 export function Telltales({ side }: Props) {
   const refs = useRef<(ComponentRef<typeof Line> | null)[]>([])
   const time = useRef(0)
-  const color = side === 1 ? '#39d353' : '#ff5a5f'
+  const color = side === 1 ? '#1c752a' : '#ff5a5f'
 
   useFrame((_, dt) => {
     time.current += dt
