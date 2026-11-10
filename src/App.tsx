@@ -8,8 +8,11 @@ export default function App() {
     <div className="app">
       <Scene />
       <HUD />
-      <Controls />
-      <Panel />
+      {/* Desktop: no box (display: contents). Phone: bottom dock — steering + menu row over the trim grid. */}
+      <div className="dock">
+        <Controls />
+        <Panel />
+      </div>
     </div>
   )
 }
