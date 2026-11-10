@@ -1,7 +1,9 @@
 import { useSim, toDeg, nextCamera, CAMERA_LABEL } from '../store'
 import { MS_TO_KNOTS } from '../sim/math'
 import { POINTS_OF_SAIL } from '../lessons/pointsOfSail'
+import { useRef } from 'react'
 import { useIsPhone } from '../hooks/useIsPhone'
+import { useReportInset } from '../hooks/useViewInsets'
 import { Compass } from './Compass'
 
 const kn = (v: number) => (v * MS_TO_KNOTS).toFixed(1)
@@ -10,11 +12,13 @@ export function HUD() {
   const boat = useSim((s) => s.boat)
   const d = useSim((s) => s.derived)
   const isPhone = useIsPhone()
+  const top = useRef<HTMLDivElement>(null)
+  useReportInset(top, 'top', isPhone)
   const twaAbs = Math.abs(toDeg(d.twa))
 
   if (isPhone) {
     return (
-      <div className="hud-top">
+      <div className="hud-top" ref={top}>
         <div className="hud hud-bar">
           <div className="bar-stats">
             <SpeedStat />
