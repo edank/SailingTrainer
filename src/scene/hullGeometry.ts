@@ -11,19 +11,25 @@ const BOW_Z = -HULL_LENGTH / 2
 const STATIONS = 14 // Number of segments along the hull; the hull is lofted from STATIONS + 1 evenly spaced cross-sections (bow → stern).
 const RING_POINTS = 11 // points around one half-section (sheer → keel → sheer)
 
-/** [t, halfBeam, keelDepth, sheerHeight] knots along the hull, t = 0 bow → 1 stern. */
+/**
+ * [t, halfBeam, keelDepth, sheerHeight] knots along the hull, t = 0 bow → 1 stern.
+ * ILCA: 1.37 m beam, ~0.10 m hull-only draft (daggerboard up), 3.81 m waterline. Negative keel depth
+ * lifts the ends clear of the water: ~0.34 m at the bow, ~0.1 m at the stern.
+ */
 const KNOTS: [number, number, number, number][] = [
-  [0.0, 0.015, 0.05, 0.25],
-  [0.12, 0.26, 0.13, 0.25],
-  [0.3, 0.5, 0.19, 0.25],
-  [0.5, 0.65, 0.22, 0.25],
-  [0.7, 0.69, 0.21, 0.25],
-  [0.88, 0.62, 0.16, 0.25],
-  [1.0, 0.5, 0.1, 0.25],
+  [0.0, 0.015, -0.08, 0.25],
+  [0.12, 0.26, 0.04, 0.25],
+  [0.3, 0.5, 0.09, 0.25],
+  [0.5, 0.65, 0.1, 0.25],
+  [0.7, 0.69, 0.1, 0.25],
+  [0.88, 0.62, 0.08, 0.25],
+  [1.0, 0.5, -0.02, 0.25],
 ]
 
-/** Widest half-beam of the hull. */
-export const HULL_HALF_BEAM = Math.max(...KNOTS.map(([, w]) => w))
+const WIDEST = KNOTS.reduce((a, b) => (b[1] > a[1] ? b : a))
+/** Widest half-beam of the hull, and the sheer (deck-edge) height there. */
+export const HULL_HALF_BEAM = WIDEST[1]
+export const HULL_SHEER_AT_BEAM = WIDEST[3]
 
 function sample(t: number): { w: number; d: number; s: number } {
   for (let i = 1; i < KNOTS.length; i++) {
@@ -51,8 +57,8 @@ export function buildHull(): THREE.BufferGeometry {
     for (let j = 0; j < RING_POINTS; j++) {
       const a = (j / (RING_POINTS - 1)) * Math.PI // 0 = stbd sheer, π/2 = keel, π = port sheer
       const x = w * Math.cos(a)
-      // sin^0.6 flattens the bottom so it reads as a dinghy, not a canoe.
-      const y = s - (s + d) * Math.pow(Math.sin(a), 0.6)
+      // sin^0.45 flattens the bottom so it reads as a planing dinghy, not a canoe.
+      const y = s - (s + d) * Math.pow(Math.sin(a), 0.45)
       pos.push(x, y, z)
     }
   }

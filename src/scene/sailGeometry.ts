@@ -1,7 +1,7 @@
 import type { Derived } from '../sim/types'
 
 /** ILCA rig dimensions in boat-local metres (forward = −Z, up = +Y, waterline y = 0). */
-export const MAST_Z = -0.75
+export const MAST_Z = -0.82 // mast step ~2.92 m forward of the transom (ILCA class diagram)
 export const MAST_FOOT_Y = 0.36 // deck height at the mast step
 export const GOOSENECK_Y = 1.15
 export const HEAD_Y = 6.1

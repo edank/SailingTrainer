@@ -11,6 +11,9 @@ const AOA_PLATEAU_END = 28 * DEG
 const AOA_STALL = 40 * DEG
 /** Centre of the sweet spot — what the mainsheet hint aims for. */
 const AOA_TARGET = 21 * DEG
+/** Heel per unit of sail force × side factor, and the most the boat ever heels. */
+const HEEL_GAIN = 24 * DEG
+const MAX_HEEL = 28 * DEG
 
 export const DEFAULT_TRIM: Trim = { mainsheet: 0.5, vang: 0.4, cunningham: 0.2, outhaul: 0.4 }
 
@@ -151,7 +154,7 @@ export function step(b: BoatState, wind: Wind, dt: number): Derived {
   // --- Heel: proportional to sail force × side component. Leeward side goes down. ---
   const sideFactor = Math.sin(twaAbs) * (twaAbs < 120 * DEG ? 1 : clamp((Math.PI - twaAbs) / (60 * DEG), 0, 1))
   const force = d.trimEfficiency * (d.aws / 8) ** 2
-  const heelTarget = -Math.sign(d.twa) * clamp(30 * DEG * force * Math.sqrt(Math.max(sideFactor, 0.15)), 0, 35 * DEG)
+  const heelTarget = -Math.sign(d.twa) * clamp(HEEL_GAIN * force * Math.sqrt(Math.max(sideFactor, 0.15)), 0, MAX_HEEL)
   b.heel = approach(b.heel, heelTarget, 0.8, dt)
 
   // --- Position: heading 0 = north = -Z, clockwise positive. Add a touch of leeway upwind. ---

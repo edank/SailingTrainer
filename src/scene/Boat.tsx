@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useSim } from '../store'
-import { buildHull, deckHeightAt, HULL_LENGTH } from './hullGeometry'
+import { buildHull, deckHeightAt, HULL_HALF_BEAM, HULL_LENGTH, HULL_SHEER_AT_BEAM } from './hullGeometry'
 import { Sail } from './Sail'
 import { BOOM_LENGTH, GOOSENECK_Y, HEAD_Y, MAST_FOOT_Y, MAST_Z, mastBendAt, sailFrame } from './sailGeometry'
 import { Telltales } from './Telltales'
@@ -14,10 +14,19 @@ const TRIM_COLOR = '#939a98'
 // const TRIM_COLOR = '#2b3a4a'
 const SPAR_COLOR = '#8a9099'
 const VANG_ALONG_BOOM = 0.7
+/** When heeled, the boat rises so the leeward deck edge stays at least this far above the water. */
+const RAIL_CLEARANCE = 0.05
 const UP = new THREE.Vector3(0, 1, 0)
 const vangStart = new THREE.Vector3()
 const vangEnd = new THREE.Vector3()
 const vangDir = new THREE.Vector3()
+
+/** How high the boat sits for a given heel; heel pivots at this height on the centreline. */
+function rideHeight(heel: number): number {
+  const a = Math.abs(heel)
+  const railDip = HULL_HALF_BEAM * Math.sin(a) - HULL_SHEER_AT_BEAM * Math.cos(a)
+  return Math.max(0, railDip + RAIL_CLEARANCE)
+}
 
 export function Boat() {
   const group = useRef<THREE.Group>(null)
@@ -26,12 +35,12 @@ export function Boat() {
   const fly = useRef<THREE.Group>(null)
   const vang = useRef<THREE.Mesh>(null)
   const hull = useMemo(() => buildHull(), [])
-  const deckAtCockpit = deckHeightAt(0.6)
+  const deckAtCockpit = deckHeightAt(0.71)
 
   useFrame(() => {
     const { boat, derived } = useSim.getState()
     if (group.current) {
-      group.current.position.set(boat.x, 0, boat.z)
+      group.current.position.set(boat.x, rideHeight(boat.heel), boat.z)
       group.current.rotation.set(0, -boat.heading, -boat.heel)
     }
     if (boom.current) {
@@ -65,16 +74,17 @@ export function Boat() {
         <meshStandardMaterial color={HULL_COLOR} flatShading roughness={0.55} />
       </mesh>
       {/* Cockpit floor (sits just above the deck so it reads as a recess) */}
-      <mesh position={[0, deckAtCockpit + 0.012, 0.55]}>
-        <boxGeometry args={[0.75, 0.02, 1.7]} />
+      <mesh position={[0, deckAtCockpit + 0.012, 0.9]}>
+        <boxGeometry args={[0.75, 0.02, 1.0]} />
         <meshStandardMaterial color={TRIM_COLOR} roughness={0.9} />
       </mesh>
 
 
       {/* Rudder + tiller, pivot at the transom */}
       <group ref={rudder} position={[0, 0.25, HULL_LENGTH / 2 + 0.04]}>
-        <mesh position={[0, -0.5, 0.04]}>
-          <boxGeometry args={[0.03, 0.85, 0.3]} />
+        {/* Blade: ILCA max 635 mm long, 203 mm chord; top stays where the rudder head meets it */}
+        <mesh position={[0, -0.375, 0.04]}>
+          <boxGeometry args={[0.02, 0.6, 0.2]} />
           <meshStandardMaterial color={TRIM_COLOR} roughness={0.6} />
         </mesh>
         {/* Rudder head: spans from the blade top up to where the tiller's aft end enters it */}
