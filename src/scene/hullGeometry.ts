@@ -22,6 +22,9 @@ const KNOTS: [number, number, number, number][] = [
   [1.0, 0.5, 0.1, 0.3],
 ]
 
+/** Widest half-beam of the hull. */
+export const HULL_HALF_BEAM = Math.max(...KNOTS.map(([, w]) => w))
+
 function sample(t: number): { w: number; d: number; s: number } {
   for (let i = 1; i < KNOTS.length; i++) {
     const [t0, w0, d0, s0] = KNOTS[i - 1]
