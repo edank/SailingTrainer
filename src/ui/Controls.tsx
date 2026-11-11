@@ -7,10 +7,10 @@ import { CONTROLS } from '../lessons/controls'
 import { ShapeReadout } from './ShapeReadout'
 
 const SLIDERS: { key: keyof Trim; keys?: string }[] = [
-  { key: 'mainsheet', keys: '↑ / ↓' },
+  { key: 'mainsheet', keys: '↓ / ↑' },
   { key: 'vang', keys: 'Q / E' },
-  { key: 'cunningham' },
-  { key: 'outhaul' },
+  { key: 'cunningham', keys: 'Z / X' },
+  { key: 'outhaul', keys: 'F / G' },
 ]
 
 export function Controls() {

@@ -16,8 +16,10 @@ function isTyping(target: EventTarget | null): boolean {
 /**
  * Keyboard + on-screen-button input, polled once per frame.
  *  ← / → or A / D : tiller (springs back to centre on release)
- *  ↑ / ↓ or W / S : mainsheet in / out
+ *  ↓ / ↑ or S / W : mainsheet in / out (pulling the sheet down brings the sail in)
  *  Q / E          : vang off / on
+ *  Z / X          : cunningham off / on
+ *  F / G          : outhaul off / on
  *  C              : cycle camera (chase → sail → top)
  *  R              : reset boat
  */
@@ -64,10 +66,14 @@ export function useInput() {
         if (next !== cur) s.setTiller(next)
 
         const sheetRate = 0.45 // full range in ~2.2 s
-        if (is('arrowup', 'w')) s.nudgeTrim('mainsheet', sheetRate * dt)
-        if (is('arrowdown', 's')) s.nudgeTrim('mainsheet', -sheetRate * dt)
+        if (is('arrowdown', 's')) s.nudgeTrim('mainsheet', sheetRate * dt)
+        if (is('arrowup', 'w')) s.nudgeTrim('mainsheet', -sheetRate * dt)
         if (is('e')) s.nudgeTrim('vang', 0.4 * dt)
         if (is('q')) s.nudgeTrim('vang', -0.4 * dt)
+        if (is('x')) s.nudgeTrim('cunningham', 0.4 * dt)
+        if (is('z')) s.nudgeTrim('cunningham', -0.4 * dt)
+        if (is('g')) s.nudgeTrim('outhaul', 0.4 * dt)
+        if (is('f')) s.nudgeTrim('outhaul', -0.4 * dt)
       },
     }),
     [],

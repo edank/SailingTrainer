@@ -15,9 +15,10 @@ npm run build      # production bundle in dist/
 | Input | Action |
 |---|---|
 | ← / → or A / D, on-screen ◀ ▶ | Steer (springs back to centre) |
-| ↑ / ↓ or W / S, slider | Mainsheet in / out |
+| ↓ / ↑ or S / W, slider | Mainsheet in / out |
 | Q / E, slider | Vang off / on |
-| sliders | Cunningham, outhaul |
+| Z / X, slider | Cunningham off / on |
+| F / G, slider | Outhaul off / on |
 | C | Cycle camera: chase → sail view (abeam, leeward) → top-down |
 | R | Reset boat |
 
