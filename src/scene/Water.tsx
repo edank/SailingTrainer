@@ -2,8 +2,9 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useSim } from '../store'
-import { SEA_HAZE } from './Sky'
 
+/** Colour the water fades to toward the horizon; the sky uses it below the horizon so the plane's edge doesn't show. */
+export const SEA_HAZE = '#4f8fbf'
 const SIZE = 600
 const SEGMENTS = 120
 
