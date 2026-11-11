@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react'
 import { Scene } from './scene/Scene'
 import { HUD } from './ui/HUD'
 import { Controls } from './ui/Controls'
@@ -19,6 +20,7 @@ export default function App() {
         <Controls />
         <Panel />
       </div>
+      <Analytics />
     </div>
   )
 }
