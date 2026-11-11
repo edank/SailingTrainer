@@ -101,7 +101,7 @@ Sources: [ILCA measurement diagrams](https://ilcasailing.org/rules-and-technical
 Use the chrome-devtools MCP tools against `npm run dev`.
 
 - **Viewports:** phone portrait `430x932x2,mobile,touch`; desktop `1440x900x1`. Check every layout change on both, and all three camera modes (chase / sail / top) for anything that affects framing.
-- **Drive state from a script:** `window.__sim.setState({ boat: {...}, camera: 'sail' })` and `getState().reset()`. To force big heel, set wind speed to 9–12 m/s and heading 45°.
+- **Drive state from a script:** `window.__sim.setState({ boat: {...}, camera: 'sail' })` and `getState().reset()` (dev-only now: the Reset button and R key were removed). To force big heel, set wind speed to 9–12 m/s and heading 45°.
 - **Gotchas:**
   - After a reload under emulation, the first screenshots can be mis-sized — re-apply `emulate` and wait.
   - MCP `click` on elements in the trim panel can time out because it re-renders constantly; click via `evaluate_script` instead.
