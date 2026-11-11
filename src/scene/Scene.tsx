@@ -27,8 +27,7 @@ export function Scene() {
       style={{ position: 'absolute', inset: 0 }}
     >
       <Sky />
-      {/* <hemisphereLight args={['#dbeeff', '#2a5a7a', 0.9]} /> */}
-      <hemisphereLight args={['#dbeeff', '#fa5a7a', 0.9]} />
+      <hemisphereLight args={['#dbeeff', '#2a5a7a', 0.9]} />
       {/* Fill from the opposite side so the shaded face of the sail still reads as white cloth */}
       <directionalLight position={[-40, 30, 50]} intensity={0.9} />
       <directionalLight

@@ -93,7 +93,6 @@ Sources: [ILCA measurement diagrams](https://ilcasailing.org/rules-and-technical
 - **Sky dome doesn't follow the camera.** `Sky.tsx` is an 800 m sphere fixed at the origin (its comment says it follows). After sailing ~800 m the camera leaves it: dark sky, white artefacts. Reset (R) hides it. Unfixed — user hasn't decided.
 - On a run the badge says "Stalled — ease the sheet" even at ideal trim (the boom tops out at 85°, so the sail is always stalled downwind). Badge advice needs a downwind case.
 - With "Keep ideal" on, **leaving** the no-go zone snaps the trim to the new ideal in one frame (entering is handled).
-- Hemisphere light ground colour is `#fa5a7a` (pink) in `Scene.tsx`, which tints the hull underside and the sail's shaded side. The original `#2a5a7a` is commented above it. This is the user's edit — ask before changing it.
 - Wind direction is fixed from north (the "From" slider was removed on purpose). Only wind speed is adjustable.
 - Lesson text still mentions the daggerboard although the model has none.
 
