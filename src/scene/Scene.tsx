@@ -4,7 +4,7 @@ import { Boat } from './Boat'
 import { CameraRig } from './CameraRig'
 import { Sky } from './Sky'
 import { Water } from './Water'
-import { WindArrow } from './WindArrow'
+import { WindStreaks } from './WindStreaks'
 import { useInput } from '../hooks/useInput'
 
 /** Drives the simulation from the render loop and applies held-key input. */
@@ -44,7 +44,7 @@ export function Scene() {
         shadow-camera-far={150}
       />
       <Water />
-      <WindArrow />
+      <WindStreaks />
       <Boat />
       <CameraRig />
       <SimLoop />

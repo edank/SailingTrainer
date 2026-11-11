@@ -57,7 +57,7 @@ src/store.ts  zustand store — single source of truth for sim + UI state
 - `HUD.tsx` renders a separate compact phone bar (`.hud-top`) built from the same sub-components as the desktop HUD.
 - `App.tsx` wraps `<Controls/>` + `<Panel/>` in `.dock`. On desktop `.dock` is `display: contents` (no box); on phone it's a bottom grid: `◀ ☰ ▶` row over a 2×2 trim grid. The ☰ panel opens as a fixed bottom sheet.
 - The phone top bar and dock report their size via `useReportInset` → `viewInsets`. `CameraRig.frameInStrip()` then backs the camera off and offsets the projection so the whole rig fits between them, following heel (per-mode `SUBJECT` box). With no insets (desktop) it's a no-op.
-- `WindArrow` shortens its shaft and gap (never its width — the user asked for that) to stay on screen on narrow viewports.
+- `WindStreaks` shows the true wind as thin streaks drifting downwind on the water around the boat (one shader draw call; wraps in a square that follows the boat), so it needs no narrow-screen fitting.
 - Keyboard-hint `<kbd>`s on buttons and sliders are hidden under `(hover: none)`; those inside lesson prose stay.
 
 ## Trim features
