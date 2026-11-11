@@ -118,11 +118,9 @@ function WindSlider() {
 function ViewButtons() {
   const camera = useSim((s) => s.camera)
   const setCamera = useSim((s) => s.setCamera)
-  const reset = useSim((s) => s.reset)
   return (
     <div className="btn-row">
       <button onClick={() => setCamera(nextCamera(camera))}>{CAMERA_LABEL[nextCamera(camera)]} <kbd>C</kbd></button>
-      <button onClick={reset}>Reset <kbd>R</kbd></button>
     </div>
   )
 }

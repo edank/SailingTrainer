@@ -37,6 +37,7 @@ interface State {
   /** Multiply the zoom by `factor` (> 1 zooms in), clamped to ZOOM_MIN…ZOOM_MAX. */
   zoomBy: (factor: number) => void
   setPanel: (p: Panel) => void
+  /** Put the boat back at the start. Not wired to any UI; used from dev scripts via `window.__sim`. */
   reset: () => void
 }
 

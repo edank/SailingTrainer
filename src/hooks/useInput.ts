@@ -25,7 +25,6 @@ function isTyping(target: EventTarget | null): boolean {
  *  F / G          : outhaul off / on
  *  C              : cycle camera (chase → sail → top)
  *  + / −          : zoom in / out
- *  R              : reset boat
  */
 export function useInput() {
   const held = useRef(new Set<string>())
@@ -39,7 +38,6 @@ export function useInput() {
         const s = useSim.getState()
         s.setCamera(nextCamera(s.camera))
       }
-      if (key === 'r') useSim.getState().reset()
       // '=' is + without Shift on most layouts.
       if (key === '+' || key === '=') useSim.getState().zoomBy(KEY_ZOOM_STEP)
       if (key === '-' || key === '_') useSim.getState().zoomBy(1 / KEY_ZOOM_STEP)

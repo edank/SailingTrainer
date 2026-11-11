@@ -21,7 +21,6 @@ npm run build      # production bundle in dist/
 | F / G, slider | Outhaul off / on |
 | C | Cycle camera: chase → sail view (abeam, leeward) → top-down |
 | + / −, mouse wheel, pinch | Zoom in / out |
-| R | Reset boat |
 
 ## Layout
 
