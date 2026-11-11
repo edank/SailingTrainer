@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import type { BoatState, Derived, Trim, Wind } from './sim/types'
 import { derive, idealTrimFor, initialBoat, step } from './sim/boat'
 import { DEG } from './sim/math'
-import { isPhone } from './hooks/useIsPhone'
 
 export type CameraMode = 'chase' | 'sail' | 'top'
 export const CAMERA_ORDER: CameraMode[] = ['chase', 'sail', 'top']
@@ -49,8 +48,8 @@ export const useSim = create<State>((set, get) => ({
   derived: derive(initialBoat(), initialWind),
   camera: 'chase',
   zoom: 1,
-  // Phones start with the lesson sheet closed so the boat is visible.
-  panel: isPhone() ? null : 'lesson',
+  // Starts closed so the boat is the first thing you see; ☰ opens it.
+  panel: null,
   paused: false,
   autoTrim: false,
 
