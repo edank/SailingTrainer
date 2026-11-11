@@ -3,6 +3,7 @@ import { useSim } from '../store'
 import { Boat } from './Boat'
 import { CameraRig } from './CameraRig'
 import { Sky } from './Sky'
+import { Wake } from './Wake'
 import { Water } from './Water'
 import { WindStreaks } from './WindStreaks'
 import { useInput } from '../hooks/useInput'
@@ -43,6 +44,7 @@ export function Scene() {
         shadow-camera-far={150}
       />
       <Water />
+      <Wake />
       <WindStreaks />
       <Boat />
       <CameraRig />

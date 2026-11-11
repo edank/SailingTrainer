@@ -7,11 +7,8 @@ import { SEA_HAZE } from './Sky'
 const SIZE = 600
 const SEGMENTS = 120
 
-const vertex = /* glsl */ `
-  uniform float uTime;
-  varying vec3 vWorld;
-  varying vec3 vNormal;
-
+/** Surface height at world xz and time t; shared so anything lying on the water rides the same swell. */
+export const WAVE_GLSL = /* glsl */ `
   // Two long, low swells — calm water that still reads as moving.
   float wave(vec2 p, float t) {
     float h = 0.0;
@@ -19,6 +16,13 @@ const vertex = /* glsl */ `
     h += 0.05 * sin(dot(p, vec2(-0.3, 1.0)) * 0.8 + t * 1.0);
     return h;
   }
+`
+
+const vertex = /* glsl */ `
+  uniform float uTime;
+  varying vec3 vWorld;
+  varying vec3 vNormal;
+  ${WAVE_GLSL}
 
   void main() {
     vec4 wp = modelMatrix * vec4(position, 1.0);
@@ -79,8 +83,9 @@ export function Water() {
     [],
   )
 
-  useFrame((_, dt) => {
-    uniforms.uTime.value += dt
+  useFrame(({ clock }) => {
+    // Clock time, not summed dt, so Wake.tsx sees the same swell phase.
+    uniforms.uTime.value = clock.elapsedTime
     const { boat } = useSim.getState()
     // Follow the boat so the plane never runs out; waves are world-space so no visible sliding.
     if (mesh.current) mesh.current.position.set(boat.x, 0, boat.z)
