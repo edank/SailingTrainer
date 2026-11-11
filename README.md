@@ -20,6 +20,7 @@ npm run build      # production bundle in dist/
 | Z / X, slider | Cunningham off / on |
 | F / G, slider | Outhaul off / on |
 | C | Cycle camera: chase → sail view (abeam, leeward) → top-down |
+| + / −, mouse wheel, pinch | Zoom in / out |
 | R | Reset boat |
 
 ## Layout

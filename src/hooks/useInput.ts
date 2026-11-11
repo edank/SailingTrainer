@@ -4,6 +4,9 @@ import { nextCamera, useSim } from '../store'
 /** On-screen buttons write key names here; polled alongside the real keyboard. */
 export const virtualKeys = new Set<string>()
 
+/** Zoom change per + / − press. */
+const KEY_ZOOM_STEP = 1.35
+
 /** Input types that don't take typed text, so a focused one must not swallow the boat's keys. */
 const KEYLESS_INPUTS = new Set(['range', 'checkbox', 'radio', 'button'])
 
@@ -21,6 +24,7 @@ function isTyping(target: EventTarget | null): boolean {
  *  Z / X          : cunningham off / on
  *  F / G          : outhaul off / on
  *  C              : cycle camera (chase → sail → top)
+ *  + / −          : zoom in / out
  *  R              : reset boat
  */
 export function useInput() {
@@ -36,6 +40,9 @@ export function useInput() {
         s.setCamera(nextCamera(s.camera))
       }
       if (key === 'r') useSim.getState().reset()
+      // '=' is + without Shift on most layouts.
+      if (key === '+' || key === '=') useSim.getState().zoomBy(KEY_ZOOM_STEP)
+      if (key === '-' || key === '_') useSim.getState().zoomBy(1 / KEY_ZOOM_STEP)
       // Also stops a focused slider from stepping on the same arrow press.
       if (e.key.startsWith('Arrow')) e.preventDefault()
     }
