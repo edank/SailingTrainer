@@ -448,7 +448,6 @@ button.hold {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px 16px;
-    .shape-readout,
 
     .link {
       display: none;
@@ -463,7 +462,8 @@ button.hold {
 }
 
 .shape-readout {
-  display: grid;
+  // Hidden until it returns in an advanced view, with explanations of each value. Restore with display: grid.
+  display: none;
   grid-template-columns: 1fr 1fr;
   gap: 2px 12px;
   font-size: 11px;
