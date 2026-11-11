@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useSim } from '../store'
 import type { Trim } from '../sim/types'
 import { CONTROLS } from '../lessons/controls'
-import { RAD } from '../sim/math'
+import { ShapeReadout } from './ShapeReadout'
 
 const SLIDERS: { key: keyof Trim; keys?: string }[] = [
   { key: 'mainsheet', keys: '↑ / ↓' },
@@ -18,10 +18,6 @@ export function Controls() {
   // A fresh hints object comes out of every sim step; compare by value so the panel only re-renders on change.
   const hints = useSim(useShallow((s) => s.derived.hints))
   const inIrons = useSim((s) => s.derived.inIrons)
-  const camber = useSim((s) => s.derived.camber)
-  const draftPos = useSim((s) => s.derived.draftPos)
-  const twist = useSim((s) => s.derived.twist)
-  const mastBend = useSim((s) => s.derived.mastBend)
   const setTrim = useSim((s) => s.setTrim)
   const setPanel = useSim((s) => s.setPanel)
   const panel = useSim((s) => s.panel)
@@ -37,12 +33,7 @@ export function Controls() {
       </div>
 
       <div className="trim-panel">
-        <div className="shape-readout" title="Read these off the draft stripes on the sail">
-          <span>Depth <b>{Math.round(camber * 100)}%</b></span>
-          <span>Draft <b>{Math.round(draftPos * 100)}%</b></span>
-          <span>Twist <b>{Math.round(twist * RAD)}°</b></span>
-          <span>Bend <b>{Math.round(mastBend * 100)}%</b></span>
-        </div>
+        <ShapeReadout />
         <div className="trim-actions">
           <button onClick={applyIdealTrim} disabled={autoTrim}>Ideal trim</button>
           <label title="Keep every control at its ideal setting as you turn">
