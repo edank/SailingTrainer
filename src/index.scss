@@ -666,34 +666,4 @@ details {
 summary {
   cursor: pointer;
   font-weight: 600;
-
-.goals {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  li {
-    padding-left: 24px;
-    position: relative;
-    color: var(--muted);
-
-    &::before {
-      content: '○';
-      position: absolute;
-      left: 4px;
-    }
-
-    &.done {
-      color: var(--good);
-      text-decoration: line-through;
-
-      &::before {
-        content: '●';
-      }
-    }
-  }
-}
 }

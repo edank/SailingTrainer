@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react'
 import { useSim, toDeg, type Panel as PanelId } from '../store'
 import { POINTS_OF_SAIL } from '../lessons/pointsOfSail'
 import { CONTROLS } from '../lessons/controls'
 import { BASIC_RULES } from '../lessons/rules'
-import { MS_TO_KNOTS } from '../sim/math'
 
 const TABS: { id: Exclude<PanelId, null>; label: string }[] = [
   { id: 'lesson', label: 'Points of sail' },
@@ -43,7 +41,6 @@ function PointsOfSailLesson() {
   const twaAbs = Math.abs(useSim((s) => toDeg(s.derived.twa)))
   return (
     <>
-      <Goals />
       <p className="lede">
         Everything in sailing is relative to the wind. Steer with <kbd>←</kbd> <kbd>→</kbd> and watch which sector you're in on the rose.
       </p>
@@ -61,44 +58,6 @@ function PointsOfSailLesson() {
         )
       })}
     </>
-  )
-}
-
-/** Three small on-the-water tasks that tick off as the sailor does them. */
-function Goals() {
-  const [done, setDone] = useState({ upwind: false, fast: false, tack: false })
-  useEffect(() => {
-    let upwindGood = 0
-    let lastTack = useSim.getState().derived.tack
-    let tackFrom: 'port' | 'starboard' | null = null
-    let lastT = performance.now()
-    const unsub = useSim.subscribe((s) => {
-      const now = performance.now()
-      const dt = (now - lastT) / 1000
-      lastT = now
-      const twaAbs = Math.abs(toDeg(s.derived.twa))
-      const flowing = s.derived.telltales.windward === 'flowing' && s.derived.telltales.leeward === 'flowing'
-      upwindGood = twaAbs >= 35 && twaAbs <= 55 && flowing ? upwindGood + dt : 0
-      const fast = s.boat.speed * MS_TO_KNOTS > 4.5
-      // A tack = tack changed while the bow passed through the wind (|TWA| small).
-      if (s.derived.tack !== lastTack) {
-        if (twaAbs < 90) tackFrom = lastTack
-        lastTack = s.derived.tack
-      }
-      const tacked = tackFrom !== null && twaAbs > 35
-      setDone((d) => {
-        const n = { upwind: d.upwind || upwindGood > 4, fast: d.fast || fast, tack: d.tack || tacked }
-        return n.upwind === d.upwind && n.fast === d.fast && n.tack === d.tack ? d : n
-      })
-    })
-    return unsub
-  }, [])
-  return (
-    <ul className="goals">
-      <li className={done.upwind ? 'done' : ''}>Hold close-hauled with both telltales flowing for 4 s</li>
-      <li className={done.fast ? 'done' : ''}>Get the boat above 4.5 kn (try a reach)</li>
-      <li className={done.tack ? 'done' : ''}>Tack through the wind onto the other side</li>
-    </ul>
   )
 }
 
