@@ -10,9 +10,19 @@ $ink: #1b1b1b;
 $water: #1b5f8f;
 $radius: 12px;
 $phone: 720px;
+$phone-landscape-height: 500px;
+$landscape-query: '(orientation: landscape) and (max-height: #{$phone-landscape-height})';
 
+// Phone layout, portrait or landscape. Keep in sync with useIsPhone.ts.
 @mixin phone {
-  @media (max-width: $phone) {
+  @media (max-width: $phone), #{$landscape-query} {
+    @content;
+  }
+}
+
+// Phone on its side: overrides on top of `phone` for a short, wide screen.
+@mixin phone-landscape {
+  @media #{$landscape-query} {
     @content;
   }
 }
@@ -295,6 +305,20 @@ button {
       color: var(--muted);
     }
   }
+
+  // One row — stats | wind + view | compass — to leave the short screen's height for the boat.
+  @include phone-landscape {
+    padding: 4px 12px;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'stats wind compass';
+    gap: 16px;
+    white-space: nowrap;
+
+    .compass {
+      width: 60px;
+      height: 60px;
+    }
+  }
 }
 
 // ---------- Compass rose ----------
@@ -357,6 +381,12 @@ button {
     align-items: end;
     gap: 10px;
   }
+
+  // Landscape: everything in one row, steering under each thumb.
+  @include phone-landscape {
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-areas: 'left trim menu right';
+  }
 }
 
 .tiller {
@@ -392,6 +422,11 @@ button.hold {
     background: var(--accent);
     color: $ink;
   }
+
+  @include phone-landscape {
+    width: 56px;
+    height: 56px;
+  }
 }
 
 .trim-panel {
@@ -413,11 +448,17 @@ button.hold {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px 16px;
-
     .shape-readout,
+
     .link {
       display: none;
     }
+  }
+
+  // Actions on the left, sliders 2 × 2 beside them.
+  @include phone-landscape {
+    grid-template-columns: auto 1fr 1fr;
+    padding: 6px 12px 4px;
   }
 }
 
@@ -502,6 +543,14 @@ button.hold {
     z-index: 2;
   }
 
+  // Landscape: a side sheet on the right, so the boat in the middle stays in view.
+  @include phone-landscape {
+    top: 12px;
+    left: auto;
+    width: min(360px, 50vw);
+    max-height: none;
+  }
+
   &:not(.open) {
     width: auto;
 
@@ -569,7 +618,6 @@ details {
 summary {
   cursor: pointer;
   font-weight: 600;
-}
 
 .goals {
   list-style: none;
@@ -599,4 +647,5 @@ summary {
       }
     }
   }
+}
 }
