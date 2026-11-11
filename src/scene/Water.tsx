@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useSim } from '../store'
+import { SEA_HAZE } from './Sky'
 
 const SIZE = 600
 const SEGMENTS = 120
@@ -73,7 +74,7 @@ export function Water() {
       uSky: { value: new THREE.Color('#2a6f9e') },
       // uSky: { value: new THREE.Color('#9fd0ea') },
       uSun: { value: new THREE.Vector3(0.4, 0.7, -0.5).normalize() },
-      uFog: { value: new THREE.Color('#cfe6f4') },
+      uFog: { value: new THREE.Color(SEA_HAZE) },
     }),
     [],
   )

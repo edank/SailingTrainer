@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 
+/** Colour the water fades to in the distance; the sky uses it below the horizon. */
+export const SEA_HAZE = '#4f8fbf'
+
 const vertex = /* glsl */ `
   varying vec3 vDir;
   void main() {
@@ -11,11 +14,15 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   uniform vec3 uTop;
   uniform vec3 uHorizon;
+  uniform vec3 uSea;
   uniform vec3 uSun;
   varying vec3 vDir;
   void main() {
-    float t = smoothstep(-0.05, 0.45, vDir.y);
+    // Pale band just above the horizon, then quickly into blue.
+    float t = pow(smoothstep(0.0, 0.5, vDir.y), 0.6);
     vec3 col = mix(uHorizon, uTop, t);
+    // Hard sea/sky split; below it matches the water's distance haze so the plane's edge doesn't show.
+    col = mix(uSea, col, smoothstep(-0.003, 0.003, vDir.y));
     float sun = pow(max(dot(normalize(vDir), uSun), 0.0), 220.0);
     col += vec3(1.0, 0.95, 0.8) * sun;
     gl_FragColor = vec4(col, 1.0);
@@ -28,8 +35,9 @@ const fragment = /* glsl */ `
 export function Sky() {
   const uniforms = useMemo(
     () => ({
-      uTop: { value: new THREE.Color('#4f93d6') },
-      uHorizon: { value: new THREE.Color('#cfe6f4') },
+      uTop: { value: new THREE.Color('#1d5fcc') },
+      uHorizon: { value: new THREE.Color('#a6cdf2') },
+      uSea: { value: new THREE.Color(SEA_HAZE) },
       uSun: { value: new THREE.Vector3(0.4, 0.7, -0.5).normalize() },
     }),
     [],
