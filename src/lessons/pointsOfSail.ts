@@ -4,7 +4,8 @@ import { NO_GO_DEG } from '../sim/polar'
 export const POINTS_OF_SAIL: PointOfSailInfo[] = [
   {
     id: 'in-irons',
-    name: 'In Irons (No-Go Zone)',
+    // name: 'In Irons (No-Go Zone)',
+    name: 'No-Go Zone',
     twaRange: [0, NO_GO_DEG],
     summary:
       'The bow is pointing straight into the wind, so the sail luffs flat and cannot generate power. The boat stops and then drifts backwards.',
