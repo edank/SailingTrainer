@@ -1,6 +1,6 @@
 import type { BoatState, Derived, TelltaleState, Trim, Wind } from './types'
 import { DEG, approach, clamp, lerp, smoothstep, wrapPi } from './math'
-import { polarSpeed } from './polar'
+import { NO_GO_DEG, polarSpeed } from './polar'
 
 /** Max boom angle when the mainsheet is fully eased. */
 const BOOM_MAX = 85 * DEG
@@ -49,21 +49,48 @@ function hint(current: number, ideal: number, tolerance = 0.15): number {
   return Math.abs(d) < tolerance ? 0 : Math.sign(d)
 }
 
-export function derive(b: BoatState, wind: Wind): Derived {
-  // --- True wind angle (signed; +ve = wind over starboard) ---
+/** True and apparent wind relative to the bow (angles signed: +ve = wind over starboard). */
+function windAngles(b: BoatState, wind: Wind) {
   const twa = wrapPi(wind.fromDir - b.heading)
-  const twaAbs = Math.abs(twa)
-
-  // --- Apparent wind: true wind vector + (−boat velocity), in boat frame ---
+  // Apparent wind = true wind vector + (−boat velocity), in boat frame.
   // Boat frame: +fwd along bow, +stbd to the right. True wind blows *toward* bearing fromDir+π.
   const twFwd = -wind.speed * Math.cos(twa) // wind from ahead → negative fwd component
   const twStbd = -wind.speed * Math.sin(twa) // wind from stbd → blows toward port (negative)
   const awFwd = twFwd - b.speed
   const awStbd = twStbd
-  const aws = Math.hypot(awFwd, awStbd)
   // Bearing the apparent wind comes FROM, relative to bow.
   const awa = Math.atan2(-awStbd, -awFwd)
-  const awaAbs = Math.abs(awa)
+  return { twa, twaAbs: Math.abs(twa), awa, awaAbs: Math.abs(awa), aws: Math.hypot(awFwd, awStbd) }
+}
+
+/** Whole-degree comparison, same rounding as the UI's TWA, so "in irons" and the point-of-sail badge agree. */
+const isInIrons = (twaAbs: number) => Math.round(twaAbs / DEG) < NO_GO_DEG
+
+/** Best setting of each control for this wind angle and strength. */
+function idealTrimAt(current: Trim, twaAbs: number, awaAbs: number, windSpeed: number): Trim {
+  // No setting makes the sail work in irons, so the ideal is to leave everything where it is.
+  if (isInIrons(twaAbs)) return { ...current }
+  const upwind = twaAbs < 70 * DEG
+  const downwind = twaAbs > 130 * DEG
+  const breeze = clamp((windSpeed - 4) / 8, 0, 1) // 0 light … 1 breezy (≥12 m/s)
+  // Ideal sheet: whatever puts the boom at awa − AOA_TARGET (capped by BOOM_MAX).
+  const idealBoom = clamp(awaAbs - AOA_TARGET, 0, BOOM_MAX)
+  return {
+    mainsheet: 1 - idealBoom / BOOM_MAX,
+    vang: upwind ? lerp(0.45, 0.9, breeze) : downwind ? 0.55 : lerp(0.35, 0.7, breeze),
+    cunningham: upwind ? lerp(0.05, 0.85, breeze) : lerp(0.0, 0.3, breeze),
+    outhaul: upwind ? lerp(0.35, 0.85, breeze) : lerp(0.15, 0.5, breeze),
+  }
+}
+
+/** Ideal trim for the boat as it is now (used by the "Ideal trim" / "Keep ideal" controls). */
+export function idealTrimFor(b: BoatState, wind: Wind): Trim {
+  const { twaAbs, awaAbs } = windAngles(b, wind)
+  return idealTrimAt(b.trim, twaAbs, awaAbs, wind.speed)
+}
+
+export function derive(b: BoatState, wind: Wind): Derived {
+  const { twa, twaAbs, awa, awaAbs, aws } = windAngles(b, wind)
   const tack = twa >= 0 ? 'starboard' : 'port'
   const leewardSign = twa >= 0 ? -1 : 1 // boom goes to leeward (opposite the wind)
 
@@ -74,7 +101,9 @@ export function derive(b: BoatState, wind: Wind): Derived {
   const boomAbs = Math.min(sheetLimit, awaAbs)
   const boomAngle = leewardSign * boomAbs
   const aoa = awaAbs - boomAbs // 0 ⇒ boom has weathercocked to the wind ⇒ luffing
-  const luffing = aoa <= 0.5 * DEG
+  // Inside the no-go zone the sail luffs whatever the trim; otherwise only once the boom weathercocks.
+  const inIrons = isInIrons(twaAbs)
+  const luffing = inIrons || aoa <= 0.5 * DEG
 
   // The sheet also pulls the boom down when it's nearly in; eased, only the vang holds it.
   const sheetHold = clamp((b.trim.mainsheet - 0.6) / 0.4, 0, 1)
@@ -92,22 +121,14 @@ export function derive(b: BoatState, wind: Wind): Derived {
   const draftPos = lerp(0.52, 0.32, b.trim.cunningham)
 
   // --- Ideal settings for the current conditions (drive hints + secondary efficiency) ---
-  const upwind = twaAbs < 70 * DEG
-  const downwind = twaAbs > 130 * DEG
-  const breeze = clamp((wind.speed - 4) / 8, 0, 1) // 0 light … 1 breezy (≥12 m/s)
-  const idealVang = upwind ? lerp(0.45, 0.9, breeze) : downwind ? 0.55 : lerp(0.35, 0.7, breeze)
-  const idealOuthaul = upwind ? lerp(0.35, 0.85, breeze) : lerp(0.15, 0.5, breeze)
-  const idealCunningham = upwind ? lerp(0.05, 0.85, breeze) : lerp(0.0, 0.3, breeze)
-  // Ideal sheet: whatever puts the boom at awa − AOA_TARGET (capped by BOOM_MAX).
-  const idealBoom = clamp(awaAbs - AOA_TARGET, 0, BOOM_MAX)
-  const idealMainsheet = 1 - idealBoom / BOOM_MAX
+  const idealTrim = idealTrimAt(b.trim, twaAbs, awaAbs, wind.speed)
 
-  const primary = sailEfficiency(aoa)
+  const primary = luffing ? 0 : sailEfficiency(aoa)
   const secondary =
     1 -
-    0.25 * Math.abs(b.trim.vang - idealVang) -
-    0.15 * Math.abs(b.trim.outhaul - idealOuthaul) -
-    0.1 * Math.abs(b.trim.cunningham - idealCunningham)
+    0.25 * Math.abs(b.trim.vang - idealTrim.vang) -
+    0.15 * Math.abs(b.trim.outhaul - idealTrim.outhaul) -
+    0.1 * Math.abs(b.trim.cunningham - idealTrim.cunningham)
   const trimEfficiency = clamp(primary * secondary, 0, 1)
 
   return {
@@ -123,14 +144,16 @@ export function derive(b: BoatState, wind: Wind): Derived {
     camber,
     draftPos,
     luffing,
+    inIrons,
     tack,
     polarSpeed: polarSpeed(twaAbs, wind.speed),
     telltales: telltale(aoa, luffing),
+    idealTrim,
     hints: {
-      mainsheet: hint(b.trim.mainsheet, idealMainsheet, 0.05),
-      vang: hint(b.trim.vang, idealVang),
-      cunningham: hint(b.trim.cunningham, idealCunningham),
-      outhaul: hint(b.trim.outhaul, idealOuthaul),
+      mainsheet: hint(b.trim.mainsheet, idealTrim.mainsheet, 0.05),
+      vang: hint(b.trim.vang, idealTrim.vang),
+      cunningham: hint(b.trim.cunningham, idealTrim.cunningham),
+      outhaul: hint(b.trim.outhaul, idealTrim.outhaul),
     },
   }
 }
@@ -144,8 +167,8 @@ export function step(b: BoatState, wind: Wind, dt: number): Derived {
   const target = d.polarSpeed * d.trimEfficiency
   const tau = target > b.speed ? 2.5 : 1.5
   b.speed = approach(b.speed, target, tau, dt)
-  // Head-to-wind drifts to a stop regardless of trim.
-  if (twaAbs < 30 * DEG) b.speed = approach(b.speed, 0, 2.0, dt)
+  // In irons the boat drifts to a stop regardless of trim.
+  if (d.inIrons) b.speed = approach(b.speed, 0, 2.0, dt)
 
   // --- Steering: rudder authority grows with speed; a little even when stopped (sculling-ish). ---
   const turnRate = (0.25 + 0.3 * b.speed) * b.tiller // rad/s

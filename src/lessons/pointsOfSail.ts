@@ -1,10 +1,11 @@
 import type { PointOfSailInfo } from './types'
+import { NO_GO_DEG } from '../sim/polar'
 
 export const POINTS_OF_SAIL: PointOfSailInfo[] = [
   {
     id: 'in-irons',
     name: 'In Irons (No-Go Zone)',
-    twaRange: [0, 35],
+    twaRange: [0, NO_GO_DEG],
     summary:
       'The bow is pointing straight into the wind, so the sail luffs flat and cannot generate power. The boat stops and then drifts backwards.',
     trimTips:
@@ -15,7 +16,7 @@ export const POINTS_OF_SAIL: PointOfSailInfo[] = [
   {
     id: 'close-hauled',
     name: 'Close-Hauled',
-    twaRange: [35, 55],
+    twaRange: [NO_GO_DEG, 55],
     summary:
       'The closest angle to the wind at which the sail still works, so the boat sails upwind. The sail is pulled in hard and the boat heels the most here.',
     trimTips:

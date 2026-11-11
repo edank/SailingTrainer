@@ -45,7 +45,10 @@ export interface Derived {
   aws: number
   /** Angle the boom makes with the centreline, radians, signed (+ve = boom out to starboard). */
   boomAngle: number
-  /** Sail angle of attack vs apparent wind, radians, unsigned. ≤0 means luffing. */
+  /**
+   * Geometric angle between apparent wind and boom, radians, unsigned. Not a verdict on sail state:
+   * `luffing` is authoritative (e.g. in irons the sail luffs even when this angle looks healthy).
+   */
   aoa: number
   /** 0…1 how well the sail is trimmed overall (drives speed and telltales). */
   trimEfficiency: number
@@ -61,6 +64,10 @@ export interface Derived {
   draftPos: number
   /** True if the sail is flogging (no drive). */
   luffing: boolean
+  /** Pointing inside the no-go zone: no trim makes the sail work, the boat must bear away. */
+  inIrons: boolean
+  /** Best setting of each control for the current wind angle and strength. */
+  idealTrim: Trim
   /** Per-control hint: -1 = ease it, 0 = good, +1 = pull on. */
   hints: { mainsheet: number; vang: number; cunningham: number; outhaul: number }
   /** Telltale state on windward and leeward sides. */

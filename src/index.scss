@@ -480,6 +480,49 @@ button.hold {
   }
 }
 
+.trim-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+
+  button {
+    padding: 4px 10px;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  input {
+    accent-color: var(--accent);
+  }
+
+  @include phone {
+    grid-column: 1 / -1;
+  }
+
+  // Landscape: a column beside the sliders, button above checkbox.
+  @include phone-landscape {
+    grid-column: auto;
+    grid-row: span 2;
+    justify-content: center;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
 .slider {
   display: flex;
   flex-direction: column;
@@ -509,6 +552,11 @@ button.hold {
 
     &.ok {
       color: var(--good);
+    }
+
+    // No trim helps (in irons).
+    &.na {
+      color: var(--muted);
     }
   }
 

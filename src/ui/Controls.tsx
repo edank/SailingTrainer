@@ -1,5 +1,6 @@
 import type { PointerEvent } from 'react'
 import { virtualKeys } from '../hooks/useInput'
+import { useShallow } from 'zustand/react/shallow'
 import { useSim } from '../store'
 import type { Trim } from '../sim/types'
 import { CONTROLS } from '../lessons/controls'
@@ -14,7 +15,9 @@ const SLIDERS: { key: keyof Trim; keys?: string }[] = [
 
 export function Controls() {
   const trim = useSim((s) => s.boat.trim)
-  const hints = useSim((s) => s.derived.hints)
+  // A fresh hints object comes out of every sim step; compare by value so the panel only re-renders on change.
+  const hints = useSim(useShallow((s) => s.derived.hints))
+  const inIrons = useSim((s) => s.derived.inIrons)
   const camber = useSim((s) => s.derived.camber)
   const draftPos = useSim((s) => s.derived.draftPos)
   const twist = useSim((s) => s.derived.twist)
@@ -22,6 +25,9 @@ export function Controls() {
   const setTrim = useSim((s) => s.setTrim)
   const setPanel = useSim((s) => s.setPanel)
   const panel = useSim((s) => s.panel)
+  const autoTrim = useSim((s) => s.autoTrim)
+  const setAutoTrim = useSim((s) => s.setAutoTrim)
+  const applyIdealTrim = useSim((s) => s.applyIdealTrim)
 
   return (
     <>
@@ -37,6 +43,13 @@ export function Controls() {
           <span>Twist <b>{Math.round(twist * RAD)}°</b></span>
           <span>Bend <b>{Math.round(mastBend * 100)}%</b></span>
         </div>
+        <div className="trim-actions">
+          <button onClick={applyIdealTrim} disabled={autoTrim}>Ideal trim</button>
+          <label title="Keep every control at its ideal setting as you turn">
+            <input type="checkbox" checked={autoTrim} onChange={(e) => setAutoTrim(e.target.checked)} />
+            Keep ideal
+          </label>
+        </div>
         {SLIDERS.map(({ key, keys }) => {
           const info = CONTROLS.find((c) => c.id === key)
           const hint = hints[key]
@@ -47,8 +60,8 @@ export function Controls() {
                   {info?.name ?? key}
                   {keys && <kbd>{keys}</kbd>}
                 </span>
-                <span className={`hint ${hint > 0 ? 'on' : hint < 0 ? 'ease' : 'ok'}`}>
-                  {hint > 0 ? '▲ pull on' : hint < 0 ? '▼ ease' : '● good'}
+                <span className={`hint ${inIrons ? 'na' : hint > 0 ? 'on' : hint < 0 ? 'ease' : 'ok'}`}>
+                  {inIrons ? '—' : hint > 0 ? '▲ pull on' : hint < 0 ? '▼ ease' : '● good'}
                 </span>
               </span>
               <input type="range" min={0} max={1} step={0.01} value={trim[key]} onChange={(e) => setTrim(key, +e.target.value)} />
