@@ -4,6 +4,15 @@ import { nextCamera, useSim } from '../store'
 /** On-screen buttons write key names here; polled alongside the real keyboard. */
 export const virtualKeys = new Set<string>()
 
+/** Input types that don't take typed text, so a focused one must not swallow the boat's keys. */
+const KEYLESS_INPUTS = new Set(['range', 'checkbox', 'radio', 'button'])
+
+/** True when the key belongs to a field the user is typing into. */
+function isTyping(target: EventTarget | null): boolean {
+  if (target instanceof HTMLInputElement) return !KEYLESS_INPUTS.has(target.type)
+  return target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable)
+}
+
 /**
  * Keyboard + on-screen-button input, polled once per frame.
  *  ← / → or A / D : tiller (springs back to centre on release)
@@ -17,7 +26,7 @@ export function useInput() {
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement | null)?.tagName === 'INPUT') return
+      if (isTyping(e.target)) return
       const key = e.key.toLowerCase()
       held.current.add(key)
       if (key === 'c') {
@@ -25,6 +34,7 @@ export function useInput() {
         s.setCamera(nextCamera(s.camera))
       }
       if (key === 'r') useSim.getState().reset()
+      // Also stops a focused slider from stepping on the same arrow press.
       if (e.key.startsWith('Arrow')) e.preventDefault()
     }
     const up = (e: KeyboardEvent) => held.current.delete(e.key.toLowerCase())
