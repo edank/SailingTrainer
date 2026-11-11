@@ -12,6 +12,8 @@ $radius: 12px;
 $phone: 720px;
 $phone-landscape-height: 500px;
 $landscape-query: '(orientation: landscape) and (max-height: #{$phone-landscape-height})';
+/** Landscape: the HUD card and the trim panel are side columns of this width, leaving the middle for the boat. */
+$landscape-column: 220px;
 
 // Phone layout, portrait or landscape. Keep in sync with useIsPhone.ts.
 @mixin phone {
@@ -242,81 +244,101 @@ button {
   gap: 6px;
 }
 
-// Phone: one compact bar (stats + compass, wind + view below) with the trim advice under it.
+// Phone: a narrow card on the left (stats + compass, wind below), so the boat can use the full height beside it.
 .hud-top {
   position: absolute;
   top: 12px;
   left: 12px;
-  right: 12px;
+  width: min(40%, 220px);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 6px;
 
-  // Floats over bright sky, so it needs a dark backing; the state colour stays in the text.
-  .trim-badge {
-    @include glass(var(--bg-strong));
-    margin-top: 0;
+  @include phone-landscape {
+    width: $landscape-column;
   }
 }
 
+// Portrait: the view button sits alone in the top-right corner (landscape: inside the card).
+.corner-camera {
+  @include glass(var(--bg-strong));
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+// Card: speed beside a small compass, then point of sail and wind stacked full width.
 .hud-bar {
   position: static;
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 10px;
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'stats compass'
-    'wind wind';
   align-items: center;
-  gap: 6px 10px;
+  gap: 6px;
 
   .bar-stats {
-    grid-area: stats;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: contents;
+  }
+
+  .stat.big {
+    .val {
+      font-size: 22px;
+    }
+
+    .small {
+      display: block;
+      margin: 2px 0 0;
+    }
   }
 
   .bar-row {
+    grid-column: 1 / -1;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 6px 10px;
   }
 
   .compass {
-    grid-area: compass;
-    width: 88px;
-    height: 88px;
+    grid-row: 1;
+    grid-column: 2;
+    width: 52px;
+    height: 52px;
   }
 
   .bar-wind {
-    grid-area: wind;
+    grid-column: 1 / -1;
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
 
     label {
-      flex: 1;
       display: flex;
       flex-direction: column;
       font-size: 12px;
       color: var(--muted);
     }
-  }
 
-  // One row — stats | wind + view | compass — to leave the short screen's height for the boat.
-  @include phone-landscape {
-    padding: 4px 12px;
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas: 'stats wind compass';
-    gap: 16px;
-    white-space: nowrap;
+    // Landscape: the view button sits beside the slider.
+    @include phone-landscape {
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 8px;
 
-    .compass {
-      width: 60px;
-      height: 60px;
+      label {
+        flex: 1;
+      }
+
+      button {
+        padding: 4px 8px;
+        white-space: nowrap;
+
+        // No room in the card; the C key still works.
+        kbd {
+          display: none;
+        }
+      }
     }
   }
 }
@@ -382,10 +404,10 @@ button {
     gap: 10px;
   }
 
-  // Landscape: everything in one row, steering under each thumb.
+  // Landscape: steering under each thumb with the menu beside ▶; the trim panel is a column above on the right.
   @include phone-landscape {
     grid-template-columns: auto 1fr auto auto;
-    grid-template-areas: 'left trim menu right';
+    grid-template-areas: 'left . menu right';
   }
 }
 
@@ -454,10 +476,15 @@ button.hold {
     }
   }
 
-  // Actions on the left, sliders 2 × 2 beside them.
+  // Landscape: the right column, mirroring the HUD card — top-right, sliders stacked as on desktop.
   @include phone-landscape {
-    grid-template-columns: auto 1fr 1fr;
-    padding: 6px 12px 4px;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    bottom: auto;
+    width: $landscape-column;
+    grid-template-columns: 1fr;
+    padding: 8px 10px 4px;
   }
 }
 
@@ -508,18 +535,33 @@ button.hold {
     accent-color: var(--accent);
   }
 
+  button,
+  label {
+    white-space: nowrap;
+  }
+
+  // Phone: the trim advice sits between the two actions and takes whatever width they leave.
+  .trim-badge {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0;
+    font-size: 11px;
+    text-align: center;
+  }
+
   @include phone {
     grid-column: 1 / -1;
   }
 
-  // Landscape: a column beside the sliders, button above checkbox.
+  // Landscape: the panel is narrow, so the advice gets its own line under the two actions.
   @include phone-landscape {
-    grid-column: auto;
-    grid-row: span 2;
-    justify-content: center;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+
+    .trim-badge {
+      order: 1;
+      flex-basis: 100%;
+    }
   }
 }
 

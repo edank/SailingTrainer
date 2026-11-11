@@ -1,11 +1,9 @@
 import { useSim, toDeg, nextCamera, CAMERA_LABEL } from '../store'
 import { MS_TO_KNOTS } from '../sim/math'
-import type { Derived } from '../sim/types'
 import { POINTS_OF_SAIL } from '../lessons/pointsOfSail'
-import { useRef } from 'react'
-import { useIsPhone } from '../hooks/useIsPhone'
-import { useReportInset } from '../hooks/useViewInsets'
+import { useIsPhone, useIsPhonePortrait } from '../hooks/useIsPhone'
 import { Compass } from './Compass'
+import { TrimAdvice } from './TrimAdvice'
 
 const kn = (v: number) => (v * MS_TO_KNOTS).toFixed(1)
 
@@ -13,29 +11,31 @@ export function HUD() {
   const boat = useSim((s) => s.boat)
   const d = useSim((s) => s.derived)
   const isPhone = useIsPhone()
-  const top = useRef<HTMLDivElement>(null)
-  useReportInset(top, 'top', isPhone)
+  const isPortrait = useIsPhonePortrait()
   const twaAbs = Math.abs(toDeg(d.twa))
 
   if (isPhone) {
     return (
-      <div className="hud-top" ref={top}>
-        <div className="hud hud-bar">
-          <div className="bar-stats">
-            <SpeedStat />
-            <div className="bar-row">
-              <Stat label="TWA" value={`${twaAbs}°`} />
-              <PointOfSail />
+      <>
+        <div className="hud-top">
+          <div className="hud hud-bar">
+            <div className="bar-stats">
+              <SpeedStat />
+              <div className="bar-row">
+                <Stat label="TWA" value={`${twaAbs}°`} />
+                <PointOfSail />
+              </div>
+            </div>
+            <Compass />
+            <div className="bar-wind">
+              <WindSlider />
+              {/* Portrait: in the top-right corner instead, keeping the card narrow. */}
+              {!isPortrait && <CameraButton />}
             </div>
           </div>
-          <Compass />
-          <div className="bar-wind">
-            <WindSlider />
-            <ViewButtons />
-          </div>
         </div>
-        <TrimAdvice />
-      </div>
+        {isPortrait && <CameraButton className="corner-camera" />}
+      </>
     )
   }
 
@@ -59,7 +59,9 @@ export function HUD() {
         <div className="wind-ctl">
           <WindSlider />
         </div>
-        <ViewButtons />
+        <div className="btn-row">
+          <CameraButton />
+        </div>
       </div>
     </>
   )
@@ -83,27 +85,6 @@ function PointOfSail() {
   return <div className="pos-badge">{pos.name}</div>
 }
 
-function TrimAdvice() {
-  const d = useSim((s) => s.derived)
-  const { tone, text } = trimAdvice(d)
-  return <div className={`trim-badge ${tone}`}>{text}</div>
-}
-
-/**
- * What to do next. The telltales say what's wrong; the mainsheet hint says whether the sheet can fix it.
- * Downwind with the sheet fully out the sail is stalled by design, so that alone is not a fault.
- */
-function trimAdvice(d: Derived): { tone: 'good' | 'ok' | 'bad'; text: string } {
-  if (d.inIrons) return { tone: 'bad', text: 'In irons — bear away' }
-  // Outside the no-go zone a luffing sail always has room to sheet in.
-  if (d.luffing) return { tone: 'bad', text: 'Luffing — sheet in' }
-  const sheet = d.hints.mainsheet
-  if (d.telltales.leeward === 'stalled' && sheet < 0) return { tone: 'ok', text: 'Stalled — ease the sheet' }
-  if (d.telltales.windward === 'lifting' && sheet > 0) return { tone: 'ok', text: 'Sail too far out — sheet in' }
-  const allGood = Object.values(d.hints).every((h) => h === 0)
-  return { tone: allGood ? 'good' : 'ok', text: 'Trim OK' }
-}
-
 function WindSlider() {
   const speed = useSim((s) => s.wind.speed)
   const setWind = useSim((s) => s.setWind)
@@ -115,13 +96,13 @@ function WindSlider() {
   )
 }
 
-function ViewButtons() {
+function CameraButton({ className }: { className?: string }) {
   const camera = useSim((s) => s.camera)
   const setCamera = useSim((s) => s.setCamera)
   return (
-    <div className="btn-row">
-      <button onClick={() => setCamera(nextCamera(camera))}>{CAMERA_LABEL[nextCamera(camera)]} <kbd>C</kbd></button>
-    </div>
+    <button className={className} onClick={() => setCamera(nextCamera(camera))}>
+      {CAMERA_LABEL[nextCamera(camera)]} <kbd>C</kbd>
+    </button>
   )
 }
 

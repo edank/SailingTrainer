@@ -5,6 +5,8 @@ import { useSim } from '../store'
 import type { Trim } from '../sim/types'
 import { CONTROLS } from '../lessons/controls'
 import { ShapeReadout } from './ShapeReadout'
+import { TrimAdvice } from './TrimAdvice'
+import { useIsPhone } from '../hooks/useIsPhone'
 
 const SLIDERS: { key: keyof Trim; keys?: string }[] = [
   { key: 'mainsheet', keys: '↓ / ↑' },
@@ -24,6 +26,7 @@ export function Controls() {
   const autoTrim = useSim((s) => s.autoTrim)
   const setAutoTrim = useSim((s) => s.setAutoTrim)
   const applyIdealTrim = useSim((s) => s.applyIdealTrim)
+  const isPhone = useIsPhone()
 
   return (
     <>
@@ -36,6 +39,8 @@ export function Controls() {
         <ShapeReadout />
         <div className="trim-actions">
           <button onClick={applyIdealTrim} disabled={autoTrim}>Ideal trim</button>
+          {/* Desktop shows it in the HUD. */}
+          {isPhone && <TrimAdvice />}
           <label title="Keep every control at its ideal setting as you turn">
             <input type="checkbox" checked={autoTrim} onChange={(e) => setAutoTrim(e.target.checked)} />
             Keep ideal
