@@ -78,7 +78,7 @@ The model aims to be **close to the real boat, not exact** — skip changes that
 | Hull-only draft / max draft | 0.10 m / ~0.80 m | 0.10 m; no daggerboard (removed — it was always hidden underwater) |
 | Mast step from transom | 2.903–2.947 m | 2.92 m (`MAST_Z = -0.82`) |
 | Mast sections | 2.865 m bottom + 3.60 m top, 0.305 m overlap | masthead at y 6.1 |
-| Boom / sail foot / luff | ≤ 2.74 / ≤ 2.74 / ≤ 5.13 m | 2.75 / 2.65 / 4.95 m |
+| Boom / sail foot / luff | ≤ 2.74 / ≤ 2.74 / ≤ 5.13 m | 2.75 / 2.70 / 4.95 m |
 | Rudder blade | ≤ 0.635 m long, 0.203 m chord | 0.60 × 0.20 m |
 | Daggerboard | 0.68 m below keel, 0.341 m chord | — |
 | Transom width | 0.965–1.067 m | 1.00 m |

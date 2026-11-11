@@ -1,4 +1,5 @@
 import type { Derived } from '../sim/types'
+import { smoothstep } from '../sim/math'
 
 /** ILCA rig dimensions in boat-local metres (forward = −Z, up = +Y, waterline y = 0). */
 export const MAST_Z = -0.82 // mast step ~2.92 m forward of the transom (ILCA class diagram)
@@ -6,7 +7,7 @@ export const MAST_FOOT_Y = 0.36 // deck height at the mast step
 export const GOOSENECK_Y = 1.15
 export const HEAD_Y = 6.1
 export const BOOM_LENGTH = 2.75
-export const FOOT = 2.65
+export const FOOT = 2.7
 export const HEAD_WIDTH = 0.28
 /** Forward bow of the mast at mid-height when fully bent, metres. */
 export const MAST_BEND_MAX = 0.3
@@ -23,6 +24,8 @@ export function mastBendAt(y: number, bend: number): number {
 }
 
 export interface SailFrame {
+  /** Height fraction: 0 foot … 1 head. */
+  v: number
   /** Leeward side sign: −1 when the boom is to port. */
   side: number
   /** Chord yaw (boom angle + twist) at height v. */
@@ -52,6 +55,7 @@ export function sailFrame(v: number, d: Derived): SailFrame {
   const ly = GOOSENECK_Y + (HEAD_Y - GOOSENECK_Y) * v
   const cosE = Math.cos(elev)
   return {
+    v,
     side,
     phi,
     elev,
@@ -70,8 +74,11 @@ export function sailFrame(v: number, d: Derived): SailFrame {
 /** Camber bulge (metres, toward leeward) at chord fraction u for the given frame. */
 export function bulgeAt(u: number, f: SailFrame, d: Derived, time: number): number {
   if (d.luffing) {
-    // Flogging: camber collapses into a travelling ripple that fades at the mast.
-    return 0.12 * f.c * Math.sin(9 * u - 7 * time + 4 * (f.ly - GOOSENECK_Y)) * u
+    // Flogging: camber collapses into a travelling ripple that fades at the mast, and calms in a
+    // ~1 m patch around the clew so the corner stays shackled to the boom without a sharp twist.
+    // v is scaled so the patch is roughly round in metres (luff ~1.9× the foot).
+    const clewPin = smoothstep(0, 0.35, Math.hypot(1 - u, 1.9 * f.v))
+    return 0.12 * f.c * Math.sin(9 * u - 7 * time + 4 * (f.ly - GOOSENECK_Y)) * u * clewPin
   }
   // Peak of sin(π·u^k) sits at u = draftPos.
   const k = Math.log(0.5) / Math.log(d.draftPos)
