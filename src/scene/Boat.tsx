@@ -24,7 +24,9 @@ const HULL_COLOR = '#f2f4f6'
 /** Non-skid deck and footwell: a shade greyer than the glossy topsides. */
 const DECK_COLOR = '#e1e5e8'
 const COCKPIT_COLOR = '#cfd5d9'
-const GUNWALE_COLOR = '#3a4048'
+/** Rubbing strip: off-white, just shy of the topsides so the sheer still reads. */
+const GUNWALE_COLOR = '#d6dadd'
+const FITTING_COLOR = '#3a4048'
 const FOIL_COLOR = '#eceeed'
 const TRIM_COLOR = '#939a98'
 const SPAR_COLOR = '#8a9099'
@@ -154,7 +156,7 @@ export function Boat() {
       {/* Daggerboard trunk slot and board; the head with its handle stands proud of the deck */}
       <mesh position={[0, deckHeightAtZ(DAGGER_Z) + 0.003, DAGGER_Z]}>
         <boxGeometry args={[0.06, 0.012, DAGGER_CHORD + 0.05]} />
-        <meshStandardMaterial color={GUNWALE_COLOR} roughness={0.8} />
+        <meshStandardMaterial color={FITTING_COLOR} roughness={0.8} />
       </mesh>
       <mesh position={[0, (DAGGER_TOP + DAGGER_TIP) / 2, DAGGER_Z]} castShadow>
         <boxGeometry args={[0.03, DAGGER_TOP - DAGGER_TIP, DAGGER_CHORD]} />
@@ -162,7 +164,7 @@ export function Boat() {
       </mesh>
       <mesh position={[0, DAGGER_TOP + 0.02, DAGGER_Z + 0.04]}>
         <boxGeometry args={[0.036, 0.04, 0.16]} />
-        <meshStandardMaterial color={GUNWALE_COLOR} roughness={0.7} />
+        <meshStandardMaterial color={FITTING_COLOR} roughness={0.7} />
       </mesh>
 
       {/* Hiking strap */}
@@ -174,7 +176,7 @@ export function Boat() {
       {/* Mainsheet ratchet block on the cockpit floor */}
       <mesh position={fittings.ratchet}>
         <sphereGeometry args={[0.04, 8, 6]} />
-        <meshStandardMaterial color={GUNWALE_COLOR} roughness={0.6} />
+        <meshStandardMaterial color={FITTING_COLOR} roughness={0.6} />
       </mesh>
 
       {/* Traveller rope, its block, and the mainsheet (positioned per frame) */}
@@ -182,7 +184,7 @@ export function Boat() {
       <Rope ref={travellerStbd} color={TRIM_COLOR} radius={0.007} />
       <mesh ref={travellerBlock}>
         <sphereGeometry args={[0.035, 8, 6]} />
-        <meshStandardMaterial color={GUNWALE_COLOR} roughness={0.6} />
+        <meshStandardMaterial color={FITTING_COLOR} roughness={0.6} />
       </mesh>
       <Rope ref={sheetToTraveller} color={MAINSHEET_COLOR} />
       <Rope ref={sheetToRatchet} color={MAINSHEET_COLOR} />
@@ -202,11 +204,6 @@ export function Boat() {
         <mesh position={[0, 0.12, -0.75]} rotation-x={Math.PI / 2 - 0.08}>
           <cylinderGeometry args={[0.018, 0.022, 1.5, 6]} />
           <meshStandardMaterial color={SPAR_COLOR} roughness={0.5} metalness={0.3} />
-        </mesh>
-        {/* Tiller extension (hiking stick), from a joint at the tiller's forward end */}
-        <mesh position={[0, 0.06 + 0.15, -1.5 - 0.42]} rotation-x={0.34 - Math.PI / 2}>
-          <cylinderGeometry args={[0.012, 0.012, 0.9, 6]} />
-          <meshStandardMaterial color={GUNWALE_COLOR} roughness={0.6} />
         </mesh>
       </group>
 
