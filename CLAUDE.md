@@ -100,9 +100,18 @@ Sources: [ILCA measurement diagrams](https://ilcasailing.org/rules-and-technical
 
 Use the chrome-devtools MCP tools against `npm run dev`.
 
+Without MCP (CI, scripts): `npm run screenshot -- --out <dir> [--viewports desktop,phone] [--cameras chase,sail,top] [--state '<json>']` starts its own dev server and screenshots each view in headless Chromium with software WebGL (no GPU needed). `--state` is merged into the store first (`boat`/`wind` one level deep, angles in radians). Read the PNGs it prints.
+
 - **Viewports:** phone portrait `430x932x2,mobile,touch`; desktop `1440x900x1`. Check every layout change on both, and all three camera modes (chase / sail / top) for anything that affects framing.
 - **Drive state from a script:** `window.__sim.setState({ boat: {...}, camera: 'sail' })` and `getState().reset()` (dev-only now: the Reset button and R key were removed). To force big heel, set wind speed to 9–12 m/s and heading 45°.
 - **Gotchas:**
   - After a reload under emulation, the first screenshots can be mis-sized — re-apply `emulate` and wait.
   - MCP `click` on elements in the trim panel can time out because it re-renders constantly; click via `evaluate_script` instead.
   - `(hover: none)` can stay true after switching back from phone emulation, which hides the desktop kbd hints — that's a tooling artefact, not a bug.
+
+## Agent pipeline (`.github/workflows/agent.yml`)
+
+Labelling an issue `agent` runs `.github/agent/run.sh` on a GitHub runner: a coder agent (Opus) implements it on `agent/issue-<n>` and opens a PR, then a reviewer agent (Fable, read-only) reviews the diff and before/after screenshots. They loop up to 5 rounds; the PR ends labelled `agent-approved` or `needs-human`, and a human merges. Role prompts and output schemas live next to `run.sh`. Screenshots are pushed to the orphan `agent-screenshots` branch and embedded in PR comments. Re-adding the label re-runs on the existing PR, taking new PR comments as feedback. Needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret.
+
+- **Trust:** only users with write access can trigger a run, but anyone can open an issue on this public repo. Read an issue before labelling it: its text becomes the agent's instructions. The agents run as the same user as the job, so treat the job's `GITHUB_TOKEN` (contents/PR/issue write, job-scoped) as reachable by them.
+- **Limits:** pushes use the workflow token, so the agent can't change `.github/workflows/`, and merging a main that changed workflows into an agent branch may be rejected too. Those pushes also don't trigger other workflows. PR comments posted *while* a run is in progress aren't picked up as feedback on the next run; post them after it finishes.

@@ -1,0 +1,73 @@
+# Label an issue `agent` to have a coding agent implement it on branch agent/issue-<n>, open a PR, and loop with a
+# reviewer agent (up to 5 rounds). Ends with `agent-approved` or `needs-human` on the PR; a human merges.
+# To re-run (e.g. after commenting on the PR), remove and re-add the `agent` label. See .github/agent/.
+name: Agent
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: agent-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  agent:
+    if: github.event.label.name == 'agent'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - name: Require write access
+        env:
+          ACTOR: ${{ github.actor }}
+        run: |
+          perm=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$ACTOR/permission" --jq .permission)
+          [[ $perm == admin || $perm == write ]] || { echo "::error::$ACTOR has '$perm' access; write is required"; exit 1; }
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm install -g @anthropic-ai/claude-code@2.1.308
+
+      - name: Agent loop
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: .github/agent/run.sh
+
+      # Prompts and final results only. Full session transcripts stay off: artifacts on a public repo are downloadable.
+      - name: Upload prompts and results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: agent-issue-${{ github.event.issue.number }}
+          path: |
+            ${{ runner.temp }}/agent-${{ github.event.issue.number }}/*.json
+            ${{ runner.temp }}/agent-${{ github.event.issue.number }}/*.md
+          if-no-files-found: ignore
+
+      - name: Report failure
+        if: failure()
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="⚠️ Agent run failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      - name: Remove trigger label
+        if: always()
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/agent" || true
