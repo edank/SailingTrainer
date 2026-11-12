@@ -42,7 +42,8 @@ src/store.ts  zustand store — single source of truth for sim + UI state
   - `NO_GO_DEG` (`sim/polar.ts`, 40°): the polar's zero zone, `inIrons`, the lesson ranges in `pointsOfSail.ts`, the compass sectors (built from the lesson ranges), and the Panel goals.
   - In-irons and the point-of-sail badge both compare **whole degrees** (`Math.round`), so they flip at the same angle.
   - Phone breakpoints: `PHONE_MAX_WIDTH` / `PHONE_LANDSCAPE_MAX_HEIGHT` in `hooks/useIsPhone.ts`, mirrored by `$phone` / `$phone-landscape-height` in `index.scss` (Sass can't import TS — keep them in sync by hand).
-  - Hull: the `KNOTS` table in `hullGeometry.ts` is the shape; `HULL_HALF_BEAM` and `HULL_SHEER_AT_BEAM` are derived from it.
+  - Hull: the `KNOTS` table in `hullGeometry.ts` is the shape (smoothly interpolated); `HULL_HALF_BEAM` and `HULL_SHEER_AT_BEAM` are derived from it. Cockpit extent: `COCKPIT_FWD_Z` / `COCKPIT_AFT_Z` / `COCKPIT_FLOOR_Y`; deck fittings are placed from these and `deckHeightAtZ()`.
+  - Sail artwork (`sailTexture.ts`): a canvas in metres from the tack; the sail mesh's UVs are metric too. Two single-sided meshes: the front face is starboard and gets mirrored lettering, so the insignia reads correctly from both sides. No sail number (user's choice). Radial cut (seams fan from the clew and the head, meeting at a cross seam along the middle batten); the batten pockets, the ILCA mark (red over grey) and the rectangular window all line up with `BATTEN_TILT` (12° below horizontal toward the luff — square to the leech looked too steep). Corner patches are small rings with radial stitching.
   - Rig: `MAST_Z`, `HEAD_Y`, `BOOM_LENGTH`, etc. in `sailGeometry.ts`.
 - **Heel is visual + HUD only.** The sim never reads `boat.heel` back. Range: `HEEL_GAIN` 24°, `MAX_HEEL` 28° in `sim/boat.ts`.
 - **`aoa` is only geometric.** `luffing` is authoritative for whether the sail works (in irons it luffs even when `aoa` looks healthy).
@@ -76,12 +77,12 @@ The model aims to be **close to the real boat, not exact** — skip changes that
 |---|---|---|
 | LOA / LWL | 4.23 m / 3.81 m | 4.20 m / ~3.76 m (bow and stern ends lifted via negative keel depth) |
 | Beam | 1.37 m | 1.38 m |
-| Hull-only draft / max draft | 0.10 m / ~0.80 m | 0.10 m; no daggerboard (removed — it was always hidden underwater) |
+| Hull-only draft / max draft | 0.10 m / ~0.80 m | 0.10 m / 0.78 m (daggerboard always fully down) |
 | Mast step from transom | 2.903–2.947 m | 2.92 m (`MAST_Z = -0.82`) |
 | Mast sections | 2.865 m bottom + 3.60 m top, 0.305 m overlap | masthead at y 6.1 |
 | Boom / sail foot / luff | ≤ 2.74 / ≤ 2.74 / ≤ 5.13 m | 2.75 / 2.70 / 4.95 m |
 | Rudder blade | ≤ 0.635 m long, 0.203 m chord | 0.60 × 0.20 m |
-| Daggerboard | 0.68 m below keel, 0.341 m chord | — |
+| Daggerboard | 0.68 m below keel, 0.341 m chord | 0.68 m below keel, 0.34 m chord; trunk just forward of the cockpit, head 0.14 m above deck |
 | Transom width | 0.965–1.067 m | 1.00 m |
 | Cockpit | ≥ 0.965 m long, aft end 0.68–0.80 m from transom | 1.0 m, aft end ~0.7 m |
 
@@ -94,7 +95,6 @@ Sources: [ILCA measurement diagrams](https://ilcasailing.org/rules-and-technical
 - On a run the badge says "Stalled — ease the sheet" even at ideal trim (the boom tops out at 85°, so the sail is always stalled downwind). Badge advice needs a downwind case.
 - With "Keep ideal" on, **leaving** the no-go zone snaps the trim to the new ideal in one frame (entering is handled).
 - Wind direction is fixed from north (the "From" slider was removed on purpose). Only wind speed is adjustable.
-- Lesson text still mentions the daggerboard although the model has none.
 
 ## Verifying in the browser
 
