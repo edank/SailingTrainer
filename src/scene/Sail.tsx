@@ -69,7 +69,8 @@ export function Sail() {
   return (
     <>
       <mesh geometry={geom} material={starboard} castShadow />
-      <mesh geometry={geom} material={port} />
+      {/* Both cast: a single-sided sheet drops out of the shadow pass whenever its front faces the sun. */}
+      <mesh geometry={geom} material={port} castShadow />
     </>
   )
 }

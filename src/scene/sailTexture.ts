@@ -5,7 +5,7 @@ import { chordAt, FOOT, GOOSENECK_Y, HEAD_WIDTH, HEAD_Y } from './sailGeometry'
  * Sail cloth artwork, drawn once on a canvas in metres: x = distance aft of the luff (0 … FOOT),
  * y = height above the foot (0 … LUFF). The sail mesh's UVs use the same metric mapping.
  */
-export const LUFF = HEAD_Y - GOOSENECK_Y
+const LUFF = HEAD_Y - GOOSENECK_Y
 const PX = 200 // canvas pixels per metre
 const W = Math.round(FOOT * PX)
 const H = Math.round(LUFF * PX)
@@ -36,8 +36,8 @@ const WINDOW_AT: [number, number] = [0.35, 0.45]
 const WINDOW_SIZE: [number, number] = [0.85, 0.6]
 /** Sail numbers sit higher on the starboard side so the two sides don't overlap (RRS Appendix G). */
 const NUMBER_HEIGHT = { starboard: 0.62, port: 0.4 }
-/** The ILCA mark sits just above the top batten (height fraction where its centre line meets the leech). */
-const INSIGNIA_V = 0.81
+/** The ILCA mark sits above the top batten and the top telltale (height fraction where its centre line meets the leech). */
+const INSIGNIA_V = 0.86
 
 const toPx = (x: number, y: number): [number, number] => [x * PX, H - y * PX]
 const leechX = (y: number) => chordAt(y / LUFF)
