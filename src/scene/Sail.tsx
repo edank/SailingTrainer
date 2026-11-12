@@ -2,21 +2,51 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useSim } from '../store'
-import { bulgeAt, sailFrame, sailPoint } from './sailGeometry'
+import { bulgeAt, chordAt, FOOT, sailFrame, sailPoint } from './sailGeometry'
+import { makeSailTexture } from './sailTexture'
 
 const NU = 12 // chord-wise segments
 const NV = 18 // height-wise segments
 
+/** White cloth; a touch of emissive keeps the shaded face reading as white, not grey. */
+function clothMaterial(side: 'port' | 'starboard'): THREE.MeshStandardMaterial {
+  const map = makeSailTexture(side)
+  return new THREE.MeshStandardMaterial({
+    map,
+    emissive: '#ffffff',
+    emissiveMap: map,
+    emissiveIntensity: 0.22,
+    roughness: 0.9,
+    metalness: 0,
+    // The plane's front face points to starboard (+X) with the boom centred.
+    side: side === 'starboard' ? THREE.FrontSide : THREE.BackSide,
+  })
+}
+
 /**
  * Parametric mainsail driven by the sim: boom angle + lift, mast bend, twist, camber,
  * draft position, luffing. Rebuilt every frame (~250 verts) — cheap and always honest to the model.
+ * Drawn as two single-sided meshes so the sail numbers and insignia read correctly from both sides.
  */
 export function Sail() {
   const geom = useMemo(() => {
     const g = new THREE.PlaneGeometry(1, 1, NU, NV)
     g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array((NU + 1) * (NV + 1) * 3), 3))
+    // Metric UVs (x = metres aft of the luff / FOOT) so the artwork keeps its proportions as the chord narrows.
+    const uv = new Float32Array((NU + 1) * (NV + 1) * 2)
+    let p = 0
+    for (let j = 0; j <= NV; j++) {
+      const c = chordAt(j / NV)
+      for (let i = 0; i <= NU; i++) {
+        uv[p++] = ((i / NU) * c) / FOOT
+        uv[p++] = j / NV
+      }
+    }
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
     return g
   }, [])
+  const starboard = useMemo(() => clothMaterial('starboard'), [])
+  const port = useMemo(() => clothMaterial('port'), [])
   const timeRef = useRef(0)
 
   useFrame((_, dt) => {
@@ -37,9 +67,9 @@ export function Sail() {
   })
 
   return (
-    <mesh geometry={geom} castShadow>
-      {/* A touch of emissive keeps the shaded face reading as white cloth, not grey */}
-      <meshStandardMaterial color="#f4f1e8" emissive="#f4f1e8" emissiveIntensity={0.22} side={THREE.DoubleSide} roughness={0.9} metalness={0} />
-    </mesh>
+    <>
+      <mesh geometry={geom} material={starboard} castShadow />
+      <mesh geometry={geom} material={port} />
+    </>
   )
 }
