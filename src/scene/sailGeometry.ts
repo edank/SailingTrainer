@@ -6,9 +6,12 @@ export const MAST_Z = -0.82 // mast step ~2.92 m forward of the transom (ILCA cl
 export const MAST_FOOT_Y = 0.36 // deck height at the mast step
 export const GOOSENECK_Y = 1.15
 export const HEAD_Y = 6.1
+/** Top of the mast cap, just above the sail head. */
+export const MAST_TOP_Y = HEAD_Y + 0.04
 export const BOOM_LENGTH = 2.75
 export const FOOT = 2.7
-export const HEAD_WIDTH = 0.28
+/** The head is a corner (just the small head fitting), not a flat top. */
+export const HEAD_WIDTH = 0.05
 /** Forward bow of the mast at mid-height when fully bent, metres. */
 export const MAST_BEND_MAX = 0.3
 

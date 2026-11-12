@@ -15,9 +15,8 @@ import {
   sheerLine,
 } from './hullGeometry'
 import { Sail } from './Sail'
-import { BOOM_LENGTH, GOOSENECK_Y, HEAD_Y, MAST_FOOT_Y, MAST_Z, mastBendAt, sailFrame } from './sailGeometry'
+import { BOOM_LENGTH, GOOSENECK_Y, MAST_FOOT_Y, MAST_TOP_Y, MAST_Z, mastBendAt, sailFrame } from './sailGeometry'
 import { Telltales } from './Telltales'
-import { DraftStripes } from './DraftStripes'
 import { Mast } from './Mast'
 
 const HULL_COLOR = '#f2f4f6'
@@ -121,7 +120,7 @@ export function Boat() {
     if (rudder.current) rudder.current.rotation.y = boat.tiller * 0.6
     if (fly.current) {
       fly.current.rotation.y = -derived.awa
-      fly.current.position.z = MAST_Z + mastBendAt(HEAD_Y, derived.mastBend)
+      fly.current.position.z = MAST_Z + mastBendAt(MAST_TOP_Y, derived.mastBend)
     }
     const f = sailFrame(0, derived)
     // Vang: from the mast foot up to the boom, following the boom as it swings and lifts.
@@ -211,7 +210,7 @@ export function Boat() {
       <Mast />
 
       {/* Masthead fly (apparent-wind indicator) */}
-      <group ref={fly} position={[0, HEAD_Y + 0.3, MAST_Z]}>
+      <group ref={fly} position={[0, MAST_TOP_Y + 0.05, MAST_Z]}>
         <mesh position={[0, 0, -0.18]} rotation-x={-Math.PI / 2}>
           <coneGeometry args={[0.05, 0.16, 6]} />
           <meshStandardMaterial color="#ff7a00" />
@@ -239,7 +238,6 @@ export function Boat() {
 
       {/* Sail deforms itself from the sim; it already includes boom angle, lift and mast bend */}
       <Sail />
-      <DraftStripes />
       <Telltales side={1} />
       <Telltales side={-1} />
     </group>

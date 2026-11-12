@@ -15,8 +15,9 @@ const CLOTH = '#f4f1e8'
 const SEAM = 'rgba(120, 110, 90, 0.35)'
 const PATCH = 'rgba(150, 140, 115, 0.12)'
 const BATTEN = 'rgba(70, 66, 55, 0.7)'
-/** Clear film: reads darker than the cloth because you see the sky/water through it. */
-const WINDOW = 'rgba(95, 120, 140, 0.55)'
+/** Mesh window: reads darker than the cloth because you see the sky/water through it, crossed by the net. */
+const WINDOW = 'rgba(95, 120, 140, 0.45)'
+const WINDOW_NET = 'rgba(60, 60, 55, 0.55)'
 /** ILCA mark: letters red on top, grey below the split. */
 const INSIGNIA_TOP = '#d2232a'
 const INSIGNIA_BOTTOM = '#8a8d91'
@@ -32,9 +33,14 @@ const CLEW_RADIALS = 9
 const HEAD_RADIALS = 6
 /** Battens (and everything lined up with them) drop this far below horizontal toward the luff. */
 const BATTEN_TILT = 12 * THREE.MathUtils.DEG2RAD
-/** Clear window in the lower luff panel: lower forward corner [x, y] and [length, height] in metres; a rectangle square to the battens. */
-const WINDOW_AT: Pt = [0.3, 0.5]
-const WINDOW_SIZE: Pt = [0.9, 0.5]
+/**
+ * Mesh window (MKII sail): sits in the panel between two seams from the clew, which reach the luff at these heights (m);
+ * a half-oval on the lower seam from x0 to x1 aft of the luff, `WINDOW_HEIGHT` tall, cut off where it crosses the upper seam.
+ */
+const WINDOW_SEAMS: Pt = [0.1, 0.5]
+const WINDOW_X: Pt = [0.38, 1.75]
+const WINDOW_HEIGHT = 0.42
+const WINDOW_CELL = 0.07
 /** Reinforcement patches at head, tack and clew: [x, y, outer radius m]; rings at these fractions of it, stitched radially. */
 const CORNERS: [number, number, number][] = [
   [HEAD_WIDTH / 2, LUFF, 0.5],
@@ -43,8 +49,9 @@ const CORNERS: [number, number, number][] = [
 ]
 const CORNER_RINGS = [1, 0.7, 0.45]
 const CORNER_RADIALS = 36
-/** The ILCA mark sits above the top batten and the top telltale (height fraction where its centre line meets the leech). */
-const INSIGNIA_V = 0.86
+/** The ILCA mark sits just under the top batten (height fraction where its centre line meets the leech), `INSIGNIA_SIZE` m tall. */
+const INSIGNIA_V = 0.7
+const INSIGNIA_SIZE = 0.3
 
 const toPx = (x: number, y: number): [number, number] => [x * PX, H - y * PX]
 const leechX = (y: number) => chordAt(y / LUFF)
@@ -157,19 +164,6 @@ export function makeSailTexture(side: 'port' | 'starboard'): THREE.CanvasTexture
   }
   for (let i = 1; i < HEAD_RADIALS; i++) seam(ctx, head, lerpPt(joinLuff, joinLeech, i / HEAD_RADIALS))
 
-  // Clear window low in the luff panel.
-  const [ww, wh] = WINDOW_SIZE
-  const windowAft = alongBatten(WINDOW_AT, -ww)
-  const windowCorners: Pt[] = [WINDOW_AT, windowAft, alongNormal(windowAft, wh), alongNormal(WINDOW_AT, wh)]
-  ctx.beginPath()
-  windowCorners.forEach((p, i) => (i ? ctx.lineTo(...toPx(...p)) : ctx.moveTo(...toPx(...p))))
-  ctx.closePath()
-  ctx.fillStyle = WINDOW
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(150, 140, 115, 0.6)'
-  ctx.lineWidth = 0.025 * PX
-  ctx.stroke()
-
   // Luff sleeve (slides over the mast) and foot tabling.
   ctx.fillStyle = PATCH
   ctx.fillRect(...toPx(0, LUFF), 0.08 * PX, LUFF * PX)
@@ -195,6 +189,50 @@ export function makeSailTexture(side: 'port' | 'starboard'): THREE.CanvasTexture
     ctx.stroke()
   }
 
+  // Mesh window between its two seams: tinted half-oval, cross-hatched net, stitched rim, cut off by the upper seam.
+  const [seamLow, seamHigh] = WINDOW_SEAMS
+  const [wx0, wx1] = WINDOW_X
+  const onLowSeam = (x: number): Pt => [x, seamLow * (1 - x / FOOT)]
+  const windowShape = () => {
+    const [cx, cy] = toPx(...onLowSeam((wx0 + wx1) / 2))
+    const [fx, fy] = toPx(...onLowSeam(wx0))
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, Math.hypot(cx - fx, cy - fy), WINDOW_HEIGHT * PX, Math.atan2(cy - fy, cx - fx), Math.PI, 0)
+    ctx.closePath()
+  }
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(...toPx(0, seamLow))
+  ctx.lineTo(...toPx(0, seamHigh))
+  ctx.lineTo(...toPx(...clew))
+  ctx.closePath()
+  ctx.clip()
+  windowShape()
+  ctx.fillStyle = WINDOW
+  ctx.fill()
+  ctx.save()
+  ctx.clip()
+  ctx.strokeStyle = WINDOW_NET
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  const rise = WINDOW_HEIGHT + seamLow
+  for (let d = -rise; d <= wx1 - wx0 + rise; d += WINDOW_CELL) {
+    for (const dir of [1, -1]) {
+      ctx.moveTo(...toPx(wx0 + d, 0))
+      ctx.lineTo(...toPx(wx0 + d + dir * rise, rise))
+    }
+  }
+  ctx.stroke()
+  ctx.restore()
+  windowShape()
+  ctx.strokeStyle = 'rgba(150, 140, 115, 0.6)'
+  ctx.lineWidth = 0.025 * PX
+  ctx.stroke()
+  ctx.restore()
+  ctx.strokeStyle = SEAM
+  ctx.lineWidth = 2
+  for (const y of WINDOW_SEAMS) seam(ctx, [0, y], clew)
+
   // Batten pockets: a stitched cloth strip with the batten showing through.
   ctx.lineCap = 'butt'
   for (const [v, len] of BATTENS) {
@@ -214,11 +252,11 @@ export function makeSailTexture(side: 'port' | 'starboard'): THREE.CanvasTexture
   }
   ctx.restore()
 
-  // Class insignia between the top batten and the head, lined up with the battens.
+  // Class insignia under the top batten, lined up with the battens.
   const insigniaLeech: Pt = [leechX(INSIGNIA_V * LUFF), INSIGNIA_V * LUFF]
   const insigniaRun = inwardToLuff(insigniaLeech) - 0.1 // clear of the luff sleeve
   const [ix, iy] = alongBatten(insigniaLeech, insigniaRun / 2)
-  text(ctx, 'ILCA', ix, iy, 0.22, insigniaRun - 0.12, mirror, 'italic 900', [INSIGNIA_TOP, INSIGNIA_BOTTOM], BATTEN_ROTATION)
+  text(ctx, 'ILCA', ix, iy, INSIGNIA_SIZE, insigniaRun - 0.12, mirror, 'italic 900', [INSIGNIA_TOP, INSIGNIA_BOTTOM], BATTEN_ROTATION)
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
   tex.anisotropy = 8

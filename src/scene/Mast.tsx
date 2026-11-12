@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useSim } from '../store'
-import { HEAD_Y, MAST_FOOT_Y, MAST_Z, mastBendAt } from './sailGeometry'
+import { MAST_FOOT_Y, MAST_TOP_Y, MAST_Z, mastBendAt } from './sailGeometry'
 
 const SEGS = 16
 const RADIAL = 8
@@ -24,7 +24,7 @@ export function Mast() {
     lastBend.current = mastBend
     const pts: THREE.Vector3[] = []
     for (let i = 0; i <= SEGS; i++) {
-      const y = MAST_FOOT_Y + (HEAD_Y + 0.25 - MAST_FOOT_Y) * (i / SEGS)
+      const y = MAST_FOOT_Y + (MAST_TOP_Y - MAST_FOOT_Y) * (i / SEGS)
       pts.push(new THREE.Vector3(0, y, MAST_Z + mastBendAt(y, mastBend)))
     }
     const curve = new THREE.CatmullRomCurve3(pts)
