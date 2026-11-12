@@ -13,25 +13,61 @@ const H = Math.round(LUFF * PX)
 const CLOTH = '#f4f1e8'
 const SEAM = 'rgba(120, 110, 90, 0.35)'
 const PATCH = 'rgba(150, 140, 115, 0.12)'
-const INSIGNIA = '#d2232a'
+const BATTEN = 'rgba(70, 66, 55, 0.7)'
+/** Clear film: reads darker than the cloth because you see the sky/water through it. */
+const WINDOW = 'rgba(95, 120, 140, 0.55)'
+/** ILCA mark: letters red on top, grey below the split. */
+const INSIGNIA_TOP = '#d2232a'
+const INSIGNIA_BOTTOM = '#8a8d91'
 const NUMBER_COLOR = '#1b2330'
 const SAIL_NUMBER = '212345'
-/** Cross-cut panels: seams run square to the leech at this spacing along it. */
-const PANEL = 0.78
 /** Batten pockets: [height fraction on the leech, length m]; ILCA has three, the top one shorter. */
 const BATTENS: [number, number][] = [
   [0.28, 0.72],
   [0.52, 0.72],
   [0.76, 0.48],
 ]
+/** Radial cut: panels fan out from the clew below this cross seam (at the middle batten) and from the head above it. */
+const JOIN_V = BATTENS[1][0]
+const CLEW_RADIALS = 9
+const HEAD_RADIALS = 6
+/** Clear window in the lower luff panel: [x, y] corners in metres, edges parallel to the battens. */
+const WINDOW_AT: [number, number] = [0.35, 0.45]
+const WINDOW_SIZE: [number, number] = [0.85, 0.6]
 /** Sail numbers sit higher on the starboard side so the two sides don't overlap (RRS Appendix G). */
-const NUMBER_HEIGHT = { starboard: 0.6, port: 0.5 }
+const NUMBER_HEIGHT = { starboard: 0.62, port: 0.4 }
+/** The ILCA mark sits just above the top batten (height fraction where its centre line meets the leech). */
+const INSIGNIA_V = 0.81
 
 const toPx = (x: number, y: number): [number, number] => [x * PX, H - y * PX]
 const leechX = (y: number) => chordAt(y / LUFF)
 /** Unit vector up the leech, and its perpendicular pointing in toward the luff. */
 const LEECH = new THREE.Vector2(HEAD_WIDTH - FOOT, LUFF).normalize()
 const INWARD = new THREE.Vector2(-LEECH.y, LEECH.x)
+/** Canvas rotation (radians) that lines text up with the battens, reading luff → leech. */
+const BATTEN_ROTATION = Math.atan2(INWARD.y, -INWARD.x)
+
+type Pt = [number, number]
+const lerpPt = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
+/** `t` metres from `p` along the batten direction (+ve toward the luff). */
+const alongBatten = (p: Pt, t: number): Pt => [p[0] + INWARD.x * t, p[1] + INWARD.y * t]
+/** `t` metres from `p` square to the battens (+ve toward the head). */
+const alongNormal = (p: Pt, t: number): Pt => [p[0] + LEECH.x * t, p[1] + LEECH.y * t]
+/** Distance from `p` along the batten direction to the luff. */
+const inwardToLuff = (p: Pt) => p[0] / -INWARD.x
+
+/** Double-stitched seam between two points in metres. */
+function seam(ctx: CanvasRenderingContext2D, a: Pt, b: Pt) {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1])
+  const nx = (-(b[1] - a[1]) / len) * 0.012
+  const ny = ((b[0] - a[0]) / len) * 0.012
+  for (const k of [0, 1]) {
+    ctx.beginPath()
+    ctx.moveTo(...toPx(a[0] + nx * k, a[1] + ny * k))
+    ctx.lineTo(...toPx(b[0] + nx * k, b[1] + ny * k))
+    ctx.stroke()
+  }
+}
 
 function outline(ctx: CanvasRenderingContext2D) {
   ctx.beginPath()
@@ -49,18 +85,35 @@ function fromLeech(ctx: CanvasRenderingContext2D, y: number, len: number) {
   ctx.lineTo(...toPx(x + INWARD.x * len, y + INWARD.y * len))
 }
 
-/** Text centred at (x, y) metres, `size` m tall; mirrored for the face whose UVs run right-to-left. */
-function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, size: number, maxWidth: number, mirror: boolean, font: string) {
+/**
+ * Text centred at (x, y) metres, `size` m tall, rotated by `angle` on the canvas; mirrored for the face whose UVs
+ * run right-to-left (mirroring after the rotation keeps it on the same line as seen from that side).
+ * `colors` is one fill, or [top, bottom] for letters split across the middle.
+ */
+function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, size: number, maxWidth: number, mirror: boolean, font: string, colors: string | [string, string], angle = 0) {
   const [px, py] = toPx(x, y)
+  const sizePx = Math.round(size * PX)
   ctx.save()
   ctx.translate(px, py)
+  ctx.rotate(angle)
   if (mirror) ctx.scale(-1, 1)
-  ctx.font = `${font} ${Math.round(size * PX)}px Helvetica, Arial, sans-serif`
+  ctx.font = `${font} ${sizePx}px Helvetica, Arial, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const w = ctx.measureText(s).width
   if (w > maxWidth * PX) ctx.scale((maxWidth * PX) / w, 1)
-  ctx.fillText(s, 0, 0)
+  const fills = typeof colors === 'string' ? [colors] : colors
+  fills.forEach((color, i) => {
+    ctx.save()
+    if (fills.length > 1) {
+      ctx.beginPath()
+      ctx.rect(-w, i === 0 ? -sizePx : 0, 2 * w, sizePx)
+      ctx.clip()
+    }
+    ctx.fillStyle = color
+    ctx.fillText(s, 0, 0)
+    ctx.restore()
+  })
   ctx.restore()
 }
 
@@ -81,16 +134,35 @@ export function makeSailTexture(side: 'port' | 'starboard'): THREE.CanvasTexture
   ctx.save()
   ctx.clip()
 
-  // Cross-cut panel seams (double stitched).
+  // Radial panel seams: a cross seam along the middle batten, panels fanning from the clew below it and from the head above.
   ctx.strokeStyle = SEAM
   ctx.lineWidth = 2
-  const leechLen = Math.hypot(FOOT - HEAD_WIDTH, LUFF)
-  for (let d = PANEL; d < leechLen - 0.2; d += PANEL) {
-    for (const off of [0, 0.012]) {
-      fromLeech(ctx, d * LEECH.y + off, 4)
-      ctx.stroke()
-    }
+  const clew: Pt = [FOOT, 0]
+  const head: Pt = [HEAD_WIDTH / 2, LUFF]
+  const joinLeech: Pt = [leechX(JOIN_V * LUFF), JOIN_V * LUFF]
+  const joinLuff = alongBatten(joinLeech, inwardToLuff(joinLeech))
+  seam(ctx, joinLuff, joinLeech)
+  // Clew radials end evenly along the luff (above the tack) and on along the cross seam.
+  const tackRun = joinLuff[1] - 0.4
+  const joinRun = Math.hypot(joinLeech[0] - joinLuff[0], joinLeech[1] - joinLuff[1])
+  for (let i = 1; i < CLEW_RADIALS; i++) {
+    const s = (i / CLEW_RADIALS) * (tackRun + joinRun)
+    seam(ctx, clew, s < tackRun ? [0, 0.4 + s] : lerpPt(joinLuff, joinLeech, (s - tackRun) / joinRun))
   }
+  for (let i = 1; i < HEAD_RADIALS; i++) seam(ctx, head, lerpPt(joinLuff, joinLeech, i / HEAD_RADIALS))
+
+  // Clear window low in the luff panel.
+  const [wx, wy] = WINDOW_AT
+  const [ww, wh] = WINDOW_SIZE
+  const windowCorners: Pt[] = [[wx, wy], alongBatten([wx, wy], -ww), alongBatten([wx, wy + wh], -ww), [wx, wy + wh]]
+  ctx.beginPath()
+  windowCorners.forEach((p, i) => (i ? ctx.lineTo(...toPx(...p)) : ctx.moveTo(...toPx(...p))))
+  ctx.closePath()
+  ctx.fillStyle = WINDOW
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(150, 140, 115, 0.6)'
+  ctx.lineWidth = 0.025 * PX
+  ctx.stroke()
 
   // Luff sleeve (slides over the mast) and foot tabling.
   ctx.fillStyle = PATCH
@@ -115,31 +187,33 @@ export function makeSailTexture(side: 'port' | 'starboard'): THREE.CanvasTexture
     }
   }
 
-  // Batten pockets square to the leech.
+  // Batten pockets square to the leech: a stitched cloth strip with the batten showing through.
+  ctx.lineCap = 'butt'
   for (const [v, len] of BATTENS) {
     const y = v * LUFF
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = 'rgba(150, 140, 115, 0.35)'
-    ctx.lineWidth = 0.06 * PX
+    ctx.strokeStyle = 'rgba(150, 140, 115, 0.45)'
+    ctx.lineWidth = 0.08 * PX
     fromLeech(ctx, y, len)
     ctx.stroke()
-    ctx.strokeStyle = 'rgba(80, 75, 60, 0.45)'
-    ctx.lineWidth = 0.018 * PX
-    fromLeech(ctx, y, len - 0.04)
+    ctx.strokeStyle = SEAM
+    ctx.lineWidth = 2
+    const leech: Pt = [leechX(y), y]
+    for (const off of [-0.04, 0.04]) seam(ctx, alongNormal(leech, off), alongNormal(alongBatten(leech, len), off))
+    ctx.strokeStyle = BATTEN
+    ctx.lineWidth = 0.03 * PX
+    fromLeech(ctx, y, len - 0.05)
     ctx.stroke()
   }
   ctx.restore()
 
-  // Class insignia near the head, and the sail number below it.
-  const insigniaY = 0.84 * LUFF
-  const insigniaX = leechX(insigniaY) / 2 + 0.02
-  ctx.fillStyle = INSIGNIA
-  text(ctx, 'ILCA', insigniaX, insigniaY, 0.2, leechX(insigniaY) - 0.16, mirror, 'italic 900')
-  ctx.fillRect(...toPx(insigniaX - 0.22, insigniaY - 0.13), 0.44 * PX, 0.025 * PX)
+  // Class insignia between the top batten and the head, lined up with the battens; the sail number below it.
+  const insigniaLeech: Pt = [leechX(INSIGNIA_V * LUFF), INSIGNIA_V * LUFF]
+  const insigniaRun = inwardToLuff(insigniaLeech) - 0.1 // clear of the luff sleeve
+  const [ix, iy] = alongBatten(insigniaLeech, insigniaRun / 2)
+  text(ctx, 'ILCA', ix, iy, 0.22, insigniaRun - 0.12, mirror, 'italic 900', [INSIGNIA_TOP, INSIGNIA_BOTTOM], BATTEN_ROTATION)
 
   const numberY = NUMBER_HEIGHT[side] * LUFF
-  ctx.fillStyle = NUMBER_COLOR
-  text(ctx, SAIL_NUMBER, leechX(numberY) / 2 + 0.02, numberY, 0.3, leechX(numberY) - 0.2, mirror, 'bold')
+  text(ctx, SAIL_NUMBER, leechX(numberY) / 2 + 0.02, numberY, 0.3, leechX(numberY) - 0.2, mirror, 'bold', NUMBER_COLOR)
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
